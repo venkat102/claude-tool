@@ -45,6 +45,7 @@ Then **classify and state the tier** (blast radius × reversibility). Never assu
 ## 4. Agree — converge with you (P3)
 - Bring the **shortlist** to the user: each option, its evidence, honest pros/cons, the reliability read, and a **recommendation with rationale**. Show the **runner-up rejected and why**.
 - **Discuss, then surface the load-bearing decisions** for the user to make (fail-open / closed, tradeoffs, scope cuts) — never invent a requirement, never silently pick. **Agree on one solution.**
+- **Simplest-thing-that-works pass.** For every non-trivial mechanism in the chosen design, name the simplest primitive that still meets the acceptance criteria — keep the heavier option only if it earns its weight, otherwise drop it. **Over-engineering is a defect to design out *here*, not leave for the back gate.** Concrete probes: a **hash / fingerprint vs. a direct compare** of small non-secret data; a **bespoke build vs. reusing an existing primitive**; a **derived token vs. the value itself**; a **new layer whose only job is guarding complexity the design itself introduced**.
 - If the choice between solutions **hinges on an assumption that reading code + the web can't settle**, propose a tiny **throwaway spike** to de-risk it **before** committing — the one narrow place `/architect` may touch code (disposable, clearly marked, **never** the real implementation).
 
 ## 5. Plan — converge precise (P4)
