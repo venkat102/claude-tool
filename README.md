@@ -27,3 +27,11 @@ Every command **scales to a risk tier** (T0 trivial → T3 high-stakes), classif
 | `implement` | Build to the criteria with the quality dimensions as live guardrails. |
 | `review-loop` | Multi-dimension Phase-1-floor review loop with a coverage gate. |
 | `wear-the-coat` | Wear a profession's coat and audit a flow's lived experience. |
+
+## Project tools
+
+Project-specific commands (not part of the generic cycle above):
+
+| Command | Role |
+|---|---|
+| `release-notes` | **Jarvis** release-notes generator — turn a set of merged jarvis-app PRs into customer-facing, grouped notes (New / Improvements / Fixes / Action needed) ready to paste into a Jarvis Changelog. User-facing only; internal changes dropped. Local + manual (the LLM is your Claude session, no service to call); read-only (`gh pr view`). Needs `gh` read access to `Aerele-RnD/jarvis`. |
