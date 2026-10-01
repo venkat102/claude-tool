@@ -29,8 +29,15 @@ First, load **`brainstorming`** (drive it for the understand-dialogue — do not
 
 Then **classify and state the tier** (blast radius × reversibility). Never assume the problem — read it.
 
+**Size the scope.** If the work spans **more than one subsystem or repo** (it would produce an unreviewable single spec), decompose first: design a short **backbone** (the cross-cutting decisions, boundaries and the ordered list of sub-projects with their gates), take the backbone through `/plan-check`, then run each sub-project through its own spec → `/plan-check` → plan → build. Say this out loud and get the split agreed before designing any one piece.
+
 ## 2. Understand — evidence-first (P1)
 - **Read the real codebase** for how the relevant system actually works — patterns, constraints, prior art to *extend* rather than reinvent. Collect proof and cite `file:line`. On T2/T3, fan out read-only explorers.
+  - **Pin the snapshot:** read a fresh copy of the trunk at an exact commit and record the SHA, so every `file:line` (yours, explorers', later critics') refers to the same code.
+  - **"What exists" means everywhere:** check remote branches and open / merged PRs (and other people's work-in-progress), not only the local trunk — colleagues may already have built part of it.
+  - **Verify framework / library behaviour in its source.** Any design element that depends on how the framework, ORM, DB or a library behaves (immutability flags, read-only fields, locking and transaction snapshots, cache lifetime across deploys, which queries apply permissions) is checked in the framework source before it goes into a design. Wrong framework assumptions are the most expensive defects to find later.
+  - **Audit reuse and redefinition.** If a design reuses or changes the meaning of an existing field, flag, setting, status or mechanism, enumerate its current readers / writers, docs, and production value first — redefining an existing thing is where silent breakage hides.
+- **Ask for the facts only the user has, early.** Production topology and values, which environments exist and whether they're live, what's configured. Ask once, up front, as a short list; confirm any remembered fact that may be stale rather than relying on it.
 - **Pull external prior art from the web** when it helps — how others solved this, library/framework options, known failure patterns, security advisories. **Two trust levels:** the codebase is **authoritative** for how *your* system works; the web is **prior-art / risk input** — weighed, **cited**, and **verified against the codebase**, never trusted blind. If web access is unavailable, **say so** (don't silently skip the pass).
 - **Brainstorm *with* the user until the picture is genuinely clear** — ask the moment anything is ambiguous; make no silent assumptions. Pin the **real problem / job-to-be-done** (not just the requested solution) and what **"good / reliable"** means here.
 - **Gate:** don't move to solutions until the problem + success criteria are clear and evidence-backed. If the honest answer is **"don't build this / wrong problem / reuse X / this is a 10-line change — skip the pipeline,"** say so **here** and stop. That verdict is a valuable output, not a failure.
@@ -45,6 +52,8 @@ Then **classify and state the tier** (blast radius × reversibility). Never assu
 ## 4. Agree — converge with you (P3)
 - Bring the **shortlist** to the user: each option, its evidence, honest pros/cons, the reliability read, and a **recommendation with rationale**. Show the **runner-up rejected and why**.
 - **Discuss, then surface the load-bearing decisions** for the user to make (fail-open / closed, tradeoffs, scope cuts) — never invent a requirement, never silently pick. **Agree on one solution.**
+  - Ask decisions **one at a time**, in plain language: **context first** (what it is, where it lives, why it matters now), then *what the user would notice* under each option, then the options with the **recommended one first**. Answer clarifying questions before re-asking.
+  - Keep a separate list of **engineering defaults adopted** (choices with one clearly right answer) that the user can override — don't spend their attention asking those one by one.
 - **Simplest-thing-that-works pass.** For every non-trivial mechanism in the chosen design, name the simplest primitive that still meets the acceptance criteria — keep the heavier option only if it earns its weight, otherwise drop it. **Over-engineering is a defect to design out *here*, not leave for the back gate.** Concrete probes: a **hash / fingerprint vs. a direct compare** of small non-secret data; a **bespoke build vs. reusing an existing primitive**; a **derived token vs. the value itself**; a **new layer whose only job is guarding complexity the design itself introduced**.
 - If the choice between solutions **hinges on an assumption that reading code + the web can't settle**, propose a tiny **throwaway spike** to de-risk it **before** committing — the one narrow place `/architect` may touch code (disposable, clearly marked, **never** the real implementation).
 
@@ -72,6 +81,7 @@ The **controller** (main loop) drives the dialogue, convergence, planning, and a
 3. **The precise implementation plan.**
 4. **Assumption ledger + open decisions** — the anti-oracle contract: evidence, assumptions, confidence, and rejected alternatives all **visible**, so it's trusted *because* it shows its work and its uncertainty.
 5. **Handoff** → `/plan-check` (independent pressure-test) → `/implement` → `/review-loop`. `/architect` **never grades its own plan or auto-runs the next gate.**
+6. **Share it (optional)** — offer to publish the agreed design as an HTML page (and save a standalone copy to the Desktop) for review with others. Spike results are written back into the design doc before handoff.
 
 ## Guardrails
 - **Evidence, not assertion.** Every claim cites proof — codebase `file:line`, or a **cited + verified** web source; web is weighed, never trusted blind; if it can't be proven, **spike it or flag it**.
