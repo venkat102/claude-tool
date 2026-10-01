@@ -26,6 +26,9 @@ If there are **no acceptance criteria yet**, stop and run `/plan-check` first �
 - Read the plan + the code it will touch; confirm the acceptance criteria and the file / module boundaries before writing anything.
 - **Understand before editing** — trace the existing patterns, conventions, and abstractions the change touches, and **search for prior art to extend rather than reinvent** (a helper, utility, or shared component that already exists). Matching the codebase beats inventing a parallel way to do the same thing.
 - Keep a **durable task ledger** so progress survives a context reset.
+- **Follow the spec's delivery shape exactly.** If the plan splits the work into ordered PRs (or slices), keep that order and boundaries — each PR independently mergeable and revertible, in the stated rollback order — and keep every feature-flag / switch **default** the spec states (off-by-default stays off; a switch is never shipped visible without its enforcement).
+- **Capture baselines before the first change.** If the acceptance criteria include "existing behaviour unchanged", record that behaviour from the **unmodified trunk** first (golden outputs, placement / payload results, with volatile fields masked) and commit them, so "unchanged" is proven against the real before-state — not against two runs of the new code. Later PRs re-baseline only the outcomes they *intend* to change, and list them in their description.
+- **Check the project's own constraints** in `CLAUDE.md` and memory before choosing where tests run (some suites can only run on a dedicated test site, never inside a worktree or on a live system).
 
 ## 3. Build unit by unit — TDD, criteria-driven
 For each task / unit, smallest testable slice first:
@@ -45,6 +48,7 @@ For each task / unit, smallest testable slice first:
 
 ### When things don't go to plan
 - **Stuck or unexpected behavior → root-cause it.** Invoke `systematic-debugging`: understand the cause before any fix; no guess-and-check, no piling fixes on fixes. After ~3 failed fixes, question the approach — don't attempt a 4th blindly.
+- **A framework / library behaves differently than the plan assumed → verify in its source, then surface it.** Don't bend the code around a wrong assumption silently; the plan's guarantee may no longer hold.
 - **The plan turns out wrong or incomplete → stop and surface it.** The acceptance criteria are the contract; if reality contradicts them (a missing task, a wrong assumption, an impossible criterion), don't silently deviate — surface it and re-plan (`/plan-check`) or ask. Papering a plan flaw over in code is how the front gate's work gets lost.
 - **Receiving the per-task review → engage with rigor** (`receiving-code-review`) — a suggested fix that would break something, or that's simply wrong, gets pushed back on with evidence, not implemented to make the finding go away.
 

@@ -20,7 +20,12 @@ First, load **`quality-code-review`** — the same dimension rubric, but here ev
 Respect the project's `CLAUDE.md` and memory. Read enough of the **existing codebase the plan touches** — patterns, constraints, what it integrates with — so this is a real design review, not a generic checklist.
 
 ## 2. Scout & build shared context
-Read the plan plus the code it will touch; state ground-truth facts (what exists, the patterns to follow, the real constraints). Write a short **shared context file** handed to every design-critic, so each names only its own dimension.
+Read the plan plus the code it will touch; state ground-truth facts (what exists, the patterns to follow, the real constraints). Write a short **shared context file** handed to every design-critic, so each names only its own dimension — use the **template in Appendix A** (plan path, code snapshot + SHA, verified facts, **LOCKED decisions**, conventions, output format). Before dispatching, do four things the panel can't do for itself:
+
+- **Pin the code snapshot.** Review against an exact commit (e.g. `git archive origin/<trunk>` into a scratch dir) and record the SHA, so every `file:line` in the plan and in the findings refers to the same code. When asked "what already exists", check **remote branches and open PRs**, not only the trunk.
+- **Verify every framework / library claim.** List each place the plan relies on how the framework, ORM, DB or a library behaves (e.g. "set-only-once allows filling a blank", "read-only blocks writes", "this lock refreshes what I read", "the cache survives a deploy", "this query applies permissions"). Check each against the framework's **source** (not memory, not docs alone) and record the verified behaviour in the context file. A wrong framework assumption costs a whole review cycle to catch later.
+- **Audit every reuse or redefinition.** Whenever the plan reuses or changes the meaning of an existing field, flag, setting, status or mechanism, enumerate its **current readers and writers, its documentation, and its current production value** before the panel runs. Redefining an existing thing is where silent breakage hides (a status that suddenly blocks signups, a customer-facing hold reused as an internal marker, a "refused" value that real operators depend on).
+- **Ask the human for the facts only they have — up front.** Production topology and current values, which environments exist, whether something is live, what's configured (e.g. mail). Put these as a short "facts I need from you" list at the start of cycle 1, not mid-loop; never rely on a remembered fact that may be stale — confirm it.
 
 ## 3. Dispatch the panel — the SAME dimensions as /review-loop, in DESIGN-CRITIC mode
 One **fresh design-critic per dimension**, in parallel each cycle, each on the model assigned in **Model assignment** below (cost-aware — Opus for the load-bearing judgment dimensions, Sonnet for the rest, **not Fable-per-dimension**). **Never drop a floor dimension.** Each asks, for its lane: *what could go wrong, what is the plan silent about, what decision is being made implicitly, and what must be true for this to be correct / safe / operable?*
@@ -71,14 +76,23 @@ Use the **least-capable model that does the dimension well**. The **controller**
 
 ## 4. Loop to a coverage-gated green
 - Aggregate every dimension's findings. For each **gap**, either the plan is revised / a design decision is made, or it is recorded as a **deliberate, explicit deferral** — never a silent one.
-- Re-dispatch the **full panel** next cycle. Gaps should **narrow each cycle**.
+- **Keep a findings ledger** (`findings-ledger.md` next to the context file): one row per finding — `id · dimension · severity · summary · status (open / closed / deferred) · how it was resolved (plan § or decision)`. Critics are fresh each cycle and otherwise start cold; hand each critic **its own prior findings from the ledger** and require it to mark every one *closed* or *still open* (with evidence) **before** looking for new ones. Never close a finding on the controller's say-so alone.
+- **Every revision of the plan carries a "Changes since rev N" section.** Fixes introduce new defects; next cycle's critics check the changed parts **first**.
+- **Tier the cycles** (cost-aware, same coverage):
+  - **Cycle 1** — the full panel.
+  - **Cycle 2+** — re-dispatch only the dimensions with an open finding, **plus one regression-sweep critic** that reads only the "Changes since" section against every dimension. A dimension already *accounted for* carries its verdict forward unless the regression sweep flags it.
+  - **Cycle 3+ bar** — flag only what would cause a **wrong design choice** or a **defect the implementation plan can't catch**; everything else is *safe-to-defer to the implementation plan*. This is the stop rule against endless polish.
+- **Count what you dispatched.** Track *N dispatched / N reported* each cycle; never declare a cycle complete (or claim "all reported") until every critic's report is actually in hand.
 - **Coverage gate:** the plan is pressure-tested only when **every dimension returned an explicit verdict** — *design accounts for it* or *deliberately deferred*. A dimension that never reported = not covered = **not done**.
 
 ## 5. Output — the hardened plan
 1. **Ranked gaps & risks**, most-consequential first, each tagged with its dimension.
-2. **Decisions to lock** — the choices the plan is making *implicitly* (fail-open / closed, migration strategy, observability plan, UX states, scope cuts). **Surface these for the human to decide — never silently invent a requirement or a decision** (factual gap → read the code; intent / scope decision → ask).
+2. **Decisions to lock** — the choices the plan is making *implicitly* (fail-open / closed, migration strategy, observability plan, UX states, scope cuts). **Surface these for the human to decide — never silently invent a requirement or a decision** (factual gap → read the code; intent / scope decision → ask). Split them into two lists:
+   - **Decisions needed from you** — real intent / scope / cost choices. Ask them **one at a time**, in plain language: **context first** (what it is, where it lives, why it matters now), then *what you'd notice* under each option, then the options with the **recommended one first** and why. No jargon the human hasn't used; answer a clarifying question before re-asking.
+   - **Engineering defaults I adopted** — choices with one clearly right answer, listed so the human can override any of them, not asked one by one.
 3. **Acceptance criteria** — a per-dimension "definition of done." These are the bridge: development **builds to** them, and **`/review-loop` verifies against** them.
 4. **Verdict** — ready to implement, or needs decisions / revisions first (and exactly which).
+5. **Share it (optional)** — offer to publish the hardened plan / findings as an HTML page (and save a standalone copy to the Desktop) for review with others.
 
 ## Guardrails
 - **Planning only — write no code.** The deliverable is a hardened plan + locked decisions + acceptance criteria.
@@ -86,3 +100,48 @@ Use the **least-capable model that does the dimension well**. The **controller**
 - **Proof, not assumption.** Ground every claim in the actual codebase; for a factual unknown, read the code; for an intent / scope decision, ask the human.
 - Keep design / plan docs **local and untracked** — they do not go in code PRs.
 - Hand the acceptance criteria forward to `/review-loop` when the build is done.
+
+## Appendix A — shared context file template
+Write this once in cycle 1 (in a scratch / job temp dir, not the repo) and append a `## CYCLE N` section each cycle.
+
+```markdown
+# Shared context — /plan-check on <plan name>
+PLAN UNDER TEST: <absolute path>   (read it fully first)
+Parent / related docs: <paths>
+Mode: DESIGN CRITIC. Read-only — modify nothing; never run destructive suites.
+
+## Code snapshot
+<scratch path of the pinned snapshot> @ <repo>:<SHA> (+ framework source path for behaviour checks)
+
+## Verified facts (ground truth — build on these, don't re-prove)
+- <fact> — <file:line or framework source:line>
+- Framework behaviour checked: <claim> → <verified result, source:line>
+
+## Facts from the human
+- <production topology / config / environment facts confirmed this session>
+
+## LOCKED decisions (do not relitigate; you may flag a concrete safety consequence)
+- <decision> (who decided, when)
+
+## Conventions
+<repo rules: test sites, raw-SQL policy, formatting, CI, migration rules>
+
+## Output format (per dimension you own)
+1. VERDICT: accounted for | gaps | deliberately deferred
+2. PRIOR FINDINGS (cycle 2+): each of your ledger items → closed / still open, with evidence
+3. NEW FINDINGS ranked: severity · gap · evidence (plan § + VERIFIED file:line) · what must be true · must-decide-now or safe-to-defer
+4. DECISIONS TO LOCK (true intent/scope questions only, with recommended answer)
+5. ACCEPTANCE CRITERIA additions (testable)
+
+## CYCLE N
+What changed (link the plan's "Changes since rev N"), the bar for this cycle, word limit.
+```
+
+## Appendix B — findings ledger format
+```markdown
+| id | dim | sev | summary | status | resolution |
+|----|-----|-----|---------|--------|------------|
+| C1-SEC-1 | security | High | guest can set routing header | closed | plan §4.4 (option 1, user) |
+| C2-RES-3 | resilience | Med | lookup failure wedges cell | open | — |
+```
+Ids are `C<cycle>-<DIM>-<n>`; never delete rows — close or defer them with a reason.
