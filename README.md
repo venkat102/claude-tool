@@ -48,6 +48,20 @@ plan checking for a proposal, implementation for authorized changes, review for 
 diff, persona audit for an experience question, release notes for specified PRs.
 Explicit invocation is available when you want a particular workflow.
 
+### Jarvis SOP and readiness
+
+For authorized Jarvis feature and fix work, follow **ct-architect → ct-plan-check →
+ct-implement → ct-review-loop + ct-wear-the-coat**. Load each stage when needed and
+scale its effort to risk; small edits need brief reasoning, not a large ceremony.
+A request only to explain, plan or review remains within that requested scope.
+Existing authorization carries forward without repeated approval questions.
+
+Readiness requires evidence for the relevant failure scenarios, prohibited side
+effects, supported environments, affected existing controls and data lifecycle.
+Reviewer findings need individual dispositions and verification. Report unresolved
+gaps explicitly; green CI and self-review do not establish independent validation.
+These requirements live in the stage skills so they apply when invoked separately.
+
 ### Adaptation decisions
 
 - Retain evidence, acceptance criteria, eight review dimensions, cross-repo user

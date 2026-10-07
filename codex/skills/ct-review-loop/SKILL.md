@@ -32,6 +32,32 @@ rendering. Use browser checks where needed and available; static reading is not 
 live UX test. For migrations/configuration/deployment, inspect populated-data
 behavior, idempotency, dependency provenance, version overlap and rollback order.
 
+## Challenge the implementation
+
+Start from the user's task, the pre-change contract and the acceptance scenarios.
+Do not restrict the review to the author's tests or preferred success path. For
+stateful changes, construct relevant adversarial timelines across the real callers:
+no request received, effect with lost acknowledgement, late success, concurrent
+work, navigation and newer input. Assert what must NOT happen as well as what must.
+Inspect reused handlers for dispatch, cancellation, global-state, navigation and
+cleanup side effects; follow referenced template controls when imports change.
+
+Review persisted fields through reset/deletion, retention and rollback. Check
+whether timeout handling loses later authoritative evidence, whether stale results
+can overwrite current state, and whether recovery preserves enough information to
+finish the user's task. Verify transaction claims under the relevant supported
+isolation/version behavior; a mock or one database version is not universal proof.
+Use the actual CI dependency layout for environment-sensitive tests.
+
+Map each material acceptance criterion and reviewer finding to evidence or an
+explicit gap. A passing suite, build or complete-looking checklist is not by itself
+a readiness verdict. Classify evidence as source inspection, mocked behavior,
+component/browser check, real database test, or end-to-end integration as applicable.
+Do not declare ready while a material finding or safety-critical assumption remains
+unresolved. State narrower verified results and what remains unverified instead.
+Independent review adds confidence for consequential changes when authorized and
+available; do not invent an independent pass or impose a new approval gate.
+
 ## Findings and convergence
 
 Each finding needs a concrete failure scenario, location, evidence and consequence.

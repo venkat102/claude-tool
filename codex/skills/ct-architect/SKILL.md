@@ -31,6 +31,23 @@ without repeatedly seeking approval for routine choices.
    tradeoff and why the strongest alternative loses. Surface consequential product
    choices; make routine implementation decisions with stated assumptions.
 
+## Failure scenarios before design
+
+For changes to stateful or user-facing behavior, derive acceptance scenarios from
+the user's task and existing contracts before selecting an implementation. Include
+relevant failures and interleavings: a request that never arrives, an effect whose
+acknowledgement is lost, a late success, navigation with newer work, and another
+operation already active. Record what must remain unchanged as well as the desired
+result. Do not require this scenario set for unrelated low-impact edits.
+
+Before reusing a handler, trace its side effects through callers and callees:
+persistence, dispatch, cancellation, global state, navigation, and draft ownership.
+A status check must not inherit a command's mutations just because both consume
+the same response. For persisted state, trace creation through retention, user
+reset/deletion and rollback; reconcile privacy requirements with replay protection.
+Identify supported runtime assumptions that could change the design (browser
+capabilities, transport, dependency layout, database version/isolation).
+
 ## Plan and completion
 
 Produce scoped steps with affected files/interfaces, dependencies, observable

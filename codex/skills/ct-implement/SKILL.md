@@ -36,6 +36,25 @@ patches. If the plan is contradicted by evidence, explain the smallest necessary
 change and continue unaffected authorized work. Maintain durable progress notes
 for long tasks in a location permitted by the repository.
 
+## Regression evidence
+
+For a reproducible defect, demonstrate the failure before the fix where feasible,
+then retain a test of the observable outcome and important prohibited side effects.
+If reproduction is unavailable or unsafe, state that limitation and the alternative
+evidence. Exercise real handlers/components where practical; source-string checks
+and mocks that restate the implementation do not prove runtime behavior.
+
+Use the relevant CI commands and dependency layout, and test supported runtime
+variants implicated by the change. Do not let extra local packages mask missing
+CI dependencies. Distinguish simulated network failures from real transaction or
+browser evidence. When a change touches a screen, exercise its affected existing
+controls as well as the new path; compiling the template does not run its handlers.
+
+For reviewer feedback, keep a per-finding disposition in existing task notes or the
+review response: confirmed, refuted with evidence, fixed with verification, or
+unverified/deferred with impact. Do not silently drop items or treat every reviewer
+claim as proven. Rerun checks for changed assumptions and avoid unrelated refactors.
+
 ## Completion and handoff
 
 Report the resulting behavior, evidence, and remaining limitations. Label tests

@@ -35,6 +35,23 @@ gap and load-bearing map fact from another angle: search alternate terminology,
 inspect wrappers/tests/history, or run an authorized disposable browser scenario.
 Do not report a feature as missing because the first file did not contain it.
 
+## Exercise recovery in context
+
+For a changed screen, walk the affected existing controls as well as the new flow:
+entry/navigation, primary action, recovery and exit. A mounted component or a
+screenshot does not prove an unclicked handler works. Include applicable keyboard,
+voice and file paths; select the supported browser/transport conditions implicated
+by the change rather than attempting every possible combination.
+
+For asynchronous recovery, inspect what happens while other work is active, after
+the user changes screens or composes a newer draft, and when success arrives after
+the UI timeout. Verify where text, files, preferences and retained recordings end
+up. Check that offered actions actually work in the displayed state, failures stay
+visible, and historical results do not masquerade as current status. Distinguish
+proven refusal from uncertain completion in both wording and recovery choices.
+Record which scenarios were exercised live, simulated, source-inspected or remain
+unverified; preserve those limits in the report's overall verdict.
+
 ## Report
 
 Lead with at most three actions worth taking now, ranked by frequency and impact

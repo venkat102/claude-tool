@@ -40,6 +40,23 @@ not applicable. An unexamined dimension is unverified, not clean. Rank concrete
 gaps by consequence and link them to evidence. Distinguish blockers from optional
 improvements; a valid design need not be replaced by another valid preference.
 
+## Evidence required by the plan
+
+Turn the relevant failure scenarios into observable acceptance checks, including
+prohibited side effects. For example, checking delivery must not dispatch work,
+cancel a run, move a newer draft, or apply historical status as current readiness.
+Challenge the proposal from the user's task and existing contracts, not just from
+its chosen implementation. Identify what evidence would falsify the design.
+
+For consequential state changes, check that tests distinguish failure before any
+effect from an unknown outcome after a possible effect, and cover relevant races,
+late outcomes, data deletion and rollback. Specify which checks need a real
+transaction, browser or integration boundary; mocks alone cannot establish those
+properties. Select relevant supported environments and CI's dependency layout.
+Record unavailable environments and their impact instead of silently assuming
+local results cover them. An unresolved assumption essential to safety or data
+integrity prevents a ready verdict; it does not prevent independent authorized work.
+
 ## Deliverable
 
 Return ranked gaps, material unresolved decisions, testable acceptance criteria,
