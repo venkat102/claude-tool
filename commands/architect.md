@@ -60,7 +60,7 @@ Then **classify and state the tier** (blast radius × reversibility). Never assu
 ## 5. Plan — converge precise (P4)
 - **Drive `writing-plans`** to detail the agreed solution into a precise, task-by-task implementation plan — exact files / interfaces, the tests TDD will drive, the resilience & observability guardrails, any deployment artifacts.
 - **Ask the user immediately** whenever planning surfaces an ambiguity or a decision — no silent guesses, through planning as much as understanding.
-- **Seed the acceptance criteria** (per dimension) so `/plan-check` verifies against them and `/implement` builds to them.
+- **Seed the acceptance criteria** (per dimension) so `/plan-check` verifies against them and `/implement` builds to them. For any UI work, one criterion is always: **verified in real Chrome through Playwright** (which screens, which widths, the keyboard path, the states) — and when the design itself is a layout question, open the existing screen in Chrome first rather than designing from the source.
 
 ## Model assignment (cost-aware)
 The **controller** (main loop) drives the dialogue, convergence, planning, and adjudication at no extra agent cost. Use the least-capable model that does each role well; **never run `fable` per lens**.

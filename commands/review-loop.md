@@ -56,7 +56,7 @@ A dedicated reviewer covering, exhaustively. Framework-agnostic — map each ite
 - **Frontend security** — never render user-supplied or otherwise untrusted content as raw markup (XSS); escape/encode before injecting into the DOM; open external links safely (no reverse-tabnabbing); no secrets or tokens in the client bundle or console output; client-side checks are UX only — the server is the real authority.
 - **Frontend performance** — avoid needless re-renders and heavy work on the render path; lazy-mount / lazy-load heavy components and routes to keep the initial bundle small; no N+1 request pattern from a list (batch, paginate, or virtualize long lists); debounce network-driven input; release timers, subscriptions, and pollers on unmount.
 - **Component design / DRY** — extend shared components instead of forking them; keep presentational/leaf components reusable and side-effect-free; expose parent-driven behavior through a well-defined, null-safe interface (safe under test doubles); a single source of truth (shared store vs. deep prop-drilling).
-- **Testing & build** — new logic has unit/component tests, with **mutation-verification** of the non-obvious parts (a test that still passes when you break the code proves nothing); stub the environment traps a headless DOM lacks (viewport/media queries, object URLs, router, third-party UI modules, rich editors); the project builds/compiles with no template or type errors; the enforced formatter/linter passes — let it reformat and re-commit, never bypass the hooks; **a real browser / interaction smoke is the true gate** for editor and interaction behavior a headless DOM can't exercise.
+- **Testing & build** — new logic has unit/component tests, with **mutation-verification** of the non-obvious parts (a test that still passes when you break the code proves nothing); stub the environment traps a headless DOM lacks (viewport/media queries, object URLs, router, third-party UI modules, rich editors); the project builds/compiles with no template or type errors; the enforced formatter/linter passes — let it reformat and re-commit, never bypass the hooks; **a real browser / interaction run is the true gate** for layout, focus, and interaction behavior a headless DOM can't exercise — it is mandatory, see **Real-browser gate** below.
 
 ### UX & usability lane — dispatch whenever the change is user-facing
 Judge the **experience**, not just the mechanics — grounded in established usability heuristics. Framework- and product-agnostic; where a11y / responsive / design-consistency overlap the Frontend lane, this lane judges them as *experience quality*, not as a checkbox.
@@ -76,6 +76,17 @@ Judge the **experience**, not just the mechanics — grounded in established usa
 - **Accessibility & responsive as experience** — fully operable by keyboard and screen reader, adequate touch targets, motion-safe; the task is completable across viewports and devices with every critical action reachable and no horizontal scrolling.
 - **Forms & input UX** — correct input types / `inputmode` / `autocomplete` tokens (the right mobile keyboard, password-manager and autofill friendly); humane validation timing (validate on blur / submit, never shout errors mid-typing or before first interaction); required vs optional is obvious; format hints, examples, and sensible constraints prevent mistakes before they happen.
 - **Motion & transitions** — animation is purposeful (guides attention, shows what changed or where it went), never decorative filler; state changes are **perceivable**, not abrupt; timing and easing feel right and never block the user; all of it collapses cleanly under reduced-motion.
+
+### Real-browser gate — mandatory whenever the Frontend or UX lane runs
+Reading the code and passing component tests is **not** a UI review. Whenever the diff touches UI, the screen is **opened in real Chrome through Playwright and looked at**, every cycle, on the exact branch state being judged. A headless DOM has no layout, no real focus, no transitions and no container queries, so it cannot see the defects this gate exists for.
+
+- **Run it, don't describe it.** The controller (or one dedicated reviewer) writes a check script and executes it; "needs a browser check" is not an acceptable finding or verdict.
+- **What it must cover:** the screen at desktop, laptop and phone widths (1440 / 1100 / 375 / 320) with **no sideways scroll — measured on the document AND inside every scroll area**; realistic long content (long names, many rows, empty, error); every control reached and operated **with real key presses** (Tab, Enter, Escape) including what opens, where focus lands, and where it returns; accessible names of icon-only controls; both themes when the screen supports them; no page errors.
+- **Look at the screenshots.** Take them and read them — a passing assertion on the wrong page proves nothing.
+- **Evidence comes from the tree that will merge.** Serve the branch under review on its own port and confirm the page really is that tree (another session may already be serving a different one on the default port). A result from another branch, or from a file copied across, does not count.
+- **No real data.** Answer the API in the script (`page.route`) or use a test site; never a production or shared site.
+- **How:** the Playwright *library* with `chromium.launch({ channel: "chrome" })`. For the Jarvis SPAs use `tools/ui-browser-check/` from the claude-tool repo (`run.sh <frontend-dir> <check.mjs>`, `example.mjs`, README; local copy at `~/review/tools/ui-browser-check/`).
+- **Coverage gate:** a UI diff with no executed browser run this cycle = the Frontend and UX lanes are **not covered = not green**. Any change after the last run makes it stale; run it again.
 
 ### Deployment, rollout & migration lane — dispatch whenever the diff touches migrations, data patches, feature flags, config, dependencies, or infra
 A dedicated reviewer covering, exhaustively. Framework-agnostic:
@@ -126,6 +137,7 @@ Then, as a **distinct section — "Alternatives to discuss"** — list any **mat
 ## Guardrails
 - **Consequence order for the fix decision:** correctness → security → perf → concurrency → readability/DRY. Readability/DRY are usually **Minor** (don't block) unless DRY is duplicated **logic** / forked implementations → **Important**.
 - Tests run **only on test sites**, never real/prod sites.
+- **UI is verified in real Chrome through Playwright, not by reading.** A UI diff is never GREEN on code reading and component tests alone (see **Real-browser gate**).
 - Keep design/plan docs out of any commit.
 - **Don't merge** — surface the verdict and hand it back; the user merges.
 - **A better approach is raised, not imposed.** When the review finds a materially better / more reliable way, surface it and **discuss with the user** — never silently rewrite to it, never silently bury it. It informs a decision; on its own it does not block the merge.
