@@ -32,6 +32,14 @@ rendering. Use browser checks where needed and available; static reading is not 
 live UX test. For migrations/configuration/deployment, inspect populated-data
 behavior, idempotency, dependency provenance, version overlap and rollback order.
 
+For UI changes, include an explicit visual-usability assessment of the rendered
+screen with representative content: hierarchy, scanability, density, status
+association and action prominence. A working handler or an overflow-free page
+does not establish a usable layout. Ground findings in the user's task and visible
+evidence, separating material friction from aesthetic preference. If a companion
+experience review covers this, carry its findings and limits into the overall
+verdict; otherwise assess it here. Mark unavailable visual evidence unverified.
+
 ## Challenge the implementation
 
 Start from the user's task, the pre-change contract and the acceptance scenarios.
@@ -69,6 +77,9 @@ When fixes are authorized, make a scoped fix wave, rerun affected checks and rev
 changed assumptions. Stop when the criteria and relevant checks pass. If blocked,
 identify the exact missing evidence or decision; do not call the result green.
 Do not repeat full panels or tests without a change or unresolved concern.
+On a scoped retest, report which findings were verified fixed. Do not broaden that
+result into overall UI readiness unless the visual and journey evidence supports
+it; retain earlier review limits that the retest did not address.
 
 Return findings (or no substantiated findings), coverage, executed verification,
 and residual risks. A clean result means no identified defects within the reviewed

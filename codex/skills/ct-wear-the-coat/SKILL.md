@@ -35,6 +35,28 @@ gap and load-bearing map fact from another angle: search alternate terminology,
 inspect wrappers/tests/history, or run an authorized disposable browser scenario.
 Do not report a feature as missing because the first file did not contain it.
 
+## Inspect the rendered experience
+
+For UI changes, visually inspect the rendered screen or supplied screenshots;
+DOM assertions and successful clicks alone do not assess visual usability. Review
+the whole affected screen, including a moved view in its new frame. Use realistic
+content and workload: a one-row fixture cannot establish whether a management
+list is easy to scan. Inspect representative populated states and relevant desktop
+and narrow layouts when available; state gaps when rendering is unavailable.
+
+Judge information hierarchy, density and spacing, alignment, label clarity,
+status placement, and action prominence against the persona's task. Can they find
+the relevant record, associate its state with it, compare records, and distinguish
+the frequent or urgent action from secondary and destructive actions? Check
+whether repeated controls, introductory copy or excessive row height obscure the
+work at realistic volume. Compare with established product patterns where useful.
+
+Tie visual findings to an observed layout and a concrete task cost or error risk;
+distinguish these from aesthetic preferences. Do not prescribe compact rows,
+overflow menus or another layout universally: hiding a frequent or urgent action
+can make the experience worse. Record the inspected viewport, content/state and
+visual evidence, and report visual usability separately from functional success.
+
 ## Exercise recovery in context
 
 For a changed screen, walk the affected existing controls as well as the new flow:
@@ -57,6 +79,8 @@ unverified; preserve those limits in the report's overall verdict.
 Lead with at most three actions worth taking now, ranked by frequency and impact
 on the user's job. Include the persona, journey evidence, four-axis coverage,
 ranked gaps, and conflicts between roles. Fold low-impact suggestions together.
+For UI reviews, include the visual-usability verdict and its evidence or explicitly
+mark it unverified. Passing interaction tests must not stand in for that verdict.
 For a finding needing live verification, provide the exact action, expected
 observation and finding it would confirm or refute. Do not claim a browser check
 ran when only source was read. Hand off useful changes without implementing them
