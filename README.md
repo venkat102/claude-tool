@@ -28,6 +28,18 @@ Every command **scales to a risk tier** (T0 trivial → T3 high-stakes), classif
 | `review-loop` | Multi-dimension Phase-1-floor review loop with a coverage gate. |
 | `wear-the-coat` | Wear a profession's coat and audit a flow's lived experience. |
 
+## UI is verified in a real browser
+
+Whenever a change touches UI, the cycle requires it to be **opened in real Chrome through
+Playwright and looked at**; code reading and component tests are not enough. `architect` and
+`plan-check` put the browser check in the acceptance criteria, `implement` runs it before
+claiming done, `review-loop` gates the green on it (its **Real-browser gate**), and
+`wear-the-coat` runs its click-tests instead of only listing them.
+
+[`tools/ui-browser-check/`](./tools/ui-browser-check) is the runner used for the Jarvis SPAs:
+it serves a checkout or git worktree on its own port and runs one Playwright check script
+against it, with the API answered in the script. See its README.
+
 ## Project tools
 
 Project-specific commands (not part of the generic cycle above):

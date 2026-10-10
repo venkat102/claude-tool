@@ -67,6 +67,8 @@ Match the model to the task; the **controller** (main loop) plans, sequences, an
 ## 4. Verify before claiming done
 Run the **actual** test + build commands and read the output — evidence before assertions. Some runners (e.g. `bench run-tests`) **exit 0 even on failure**, so grep `FAILED` / `ERROR`. Tests run **only on test sites**, never real / prod. The build compiles. Every acceptance criterion has a passing test that would fail without the code.
 
+**UI changes are opened in real Chrome through Playwright before they are called done.** Component tests cannot see layout, focus, transitions or container queries. Serve the branch on its own port (confirm the page really is this tree), answer the API in the script or use a test site, then check: desktop / laptop / phone widths with no sideways scroll (the document **and** every inner scroll area), long and empty content, every control operated with real key presses and focus landing and returning correctly, accessible names, no page errors. Take screenshots and read them. Re-run after every later UI change. For the Jarvis SPAs use `tools/ui-browser-check/` from the claude-tool repo (`run.sh <frontend-dir> <check.mjs>`, `example.mjs`, README; local copy at `~/review/tools/ui-browser-check/`).
+
 ## 5. Hand off
 - Run **`/review-loop`** on the branch — the back gate verifies the whole diff against the full acceptance-criteria set, in the same dimension vocabulary.
 - Fix what it finds, to a coverage-gated green.
