@@ -134,6 +134,9 @@ Present findings **most-severe-first** with `file:line`, the concrete failure sc
 
 Then, as a **distinct section — "Alternatives to discuss"** — list any **materially better approach** the review surfaced: the current approach, the alternative, the concrete tradeoff (reliability / simplicity / cost / effort), and a recommendation. **Pause and discuss these with the user before finalizing** — they are decisions to make together, never adopted or dropped unilaterally. (Empty section when the review found none — say so, don't omit it.)
 
+## Verdict files (the pipeline's gate)
+When the review is the gate before a commit, its result is written to `.claude/workflow/reviews/latest-code.md` (the code review) and `.claude/workflow/reviews/latest-flow.md` (the flow review, executed against the running app) in the working tree, each starting with a first line that is exactly `VERDICT: GREEN` or `VERDICT: RED`. RED if any BLOCKER or MAJOR stands. Nothing is committed on anything but GREEN in both, and any change after a GREEN makes both stale. The full pipeline is in `/implement` ("The pipeline").
+
 ## Guardrails
 - **Consequence order for the fix decision:** correctness → security → perf → concurrency → readability/DRY. Readability/DRY are usually **Minor** (don't block) unless DRY is duplicated **logic** / forked implementations → **Important**.
 - Tests run **only on test sites**, never real/prod sites.

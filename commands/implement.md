@@ -70,6 +70,21 @@ Run the **actual** test + build commands and read the output — evidence before
 
 **UI changes are opened in real Chrome through Playwright before they are called done.** Component tests cannot see layout, focus, transitions or container queries. Serve the branch on its own port (confirm the page really is this tree), answer the API in the script or use a test site, then check: desktop / laptop / phone widths with no sideways scroll (the document **and** every inner scroll area), long and empty content, every control operated with real key presses and focus landing and returning correctly, accessible names, no page errors. Take screenshots and read them. Re-run after every later UI change. For the Jarvis SPAs use `tools/ui-browser-check/` from the claude-tool repo (`run.sh <frontend-dir> <check.mjs>`, `example.mjs`, README; local copy at `~/review/tools/ui-browser-check/`).
 
+## The pipeline (fixed order, non-negotiable)
+
+PLAN → BUILD → CODE REVIEW → FLOW REVIEW → GREEN → COMMIT → PR
+
+This is the team's development pipeline. It used to be a `CLAUDE.md` inside the product repository; it lives here now, so it applies wherever these commands are used.
+
+1. **No code without an approved plan.** Planning is `/architect` and `/plan-check`, done by Opus 5.5 at high effort. The plan is written to `.claude/workflow/plans/` in the working tree (untracked) and must read `STATUS: APPROVED`, by the owner, before anything is built.
+2. **Implementation is `/implement`**, and starts only once the plan is approved. Every task is built by the latest Sonnet at high effort.
+3. **No `git commit` until an adversarial reviewer has written `VERDICT: GREEN`** in BOTH `.claude/workflow/reviews/latest-code.md` and `.claude/workflow/reviews/latest-flow.md` for the current change set. The reviewer is a fresh agent, never the one that wrote the code.
+4. **No PR until a flow review passed on the final state being pushed**: actually executed against the running app (Playwright in real Chrome). Any change after the last flow review makes it stale: run it again. For a change with nothing to run (documentation only), say so in the PR instead.
+5. **RED verdict → fix every BLOCKER and MAJOR → full re-review.** Findings are never argued away or self-downgraded; only the reviewer withdraws a finding.
+6. **Scope changes mid-build go back to planning** for re-approval first.
+
+The goal: strict reviews, high-grade code quality, an architecture that survives adversarial testing. When in doubt, the stricter interpretation wins.
+
 ## 5. Hand off
 - Run **`/review-loop`** on the branch — the back gate verifies the whole diff against the full acceptance-criteria set, in the same dimension vocabulary.
 - Fix what it finds, to a coverage-gated green.
