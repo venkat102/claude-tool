@@ -18,6 +18,16 @@ Install by copying the files in [`commands/`](./commands) into `~/.claude/comman
 
 Every command **scales to a risk tier** (T0 trivial → T3 high-stakes), classified by blast radius × reversibility, so cost matches the stakes.
 
+## Which model does what
+
+| Stage | Commands | Model · effort |
+|---|---|---|
+| Planning | `architect`, `plan-check` | Opus 5.5 · high, for the controller and every agent it dispatches |
+| Implementation | `implement` | the latest Sonnet · high, for every task, and only once the plan is approved |
+| Review | `review-loop`, `wear-the-coat` | as each command's own table says |
+
+A task Sonnet cannot get right is taken back to planning, not handed to a bigger model.
+
 ## Commands
 
 | Command | Role |

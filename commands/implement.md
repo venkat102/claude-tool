@@ -52,17 +52,18 @@ For each task / unit, smallest testable slice first:
 - **The plan turns out wrong or incomplete → stop and surface it.** The acceptance criteria are the contract; if reality contradicts them (a missing task, a wrong assumption, an impossible criterion), don't silently deviate — surface it and re-plan (`/plan-check`) or ask. Papering a plan flaw over in code is how the front gate's work gets lost.
 - **Receiving the per-task review → engage with rigor** (`receiving-code-review`) — a suggested fix that would break something, or that's simply wrong, gets pushed back on with evidence, not implemented to make the finding go away.
 
-## Model assignment (cost-aware)
-Match the model to the task; the **controller** (main loop) plans, sequences, and adjudicates at no extra agent cost. **Never run Fable per task.**
+## Model assignment (SOP)
+**Implementation starts only after the plan is approved, and is done by the latest Sonnet at high effort.** The controller (the main loop) sequences and adjudicates; it does not write the product code itself. Each task goes to an implementing agent dispatched with `model: "sonnet"` (the latest Sonnet: Sonnet 5.5 at the time of writing) and `effort: "high"`, whatever the task's size: no Haiku for "easy" tasks, no Opus for "hard" ones. A task that Sonnet cannot get right after a real attempt is a sign the plan is wrong or incomplete: stop and take it back to planning (Opus 5.5, high effort) rather than switching the implementing model.
 
-| Task | Model |
+| Task | Model · effort |
 |---|---|
-| Transcription — the plan already contains the code | **haiku** |
-| Standard implementation — prose spec, 1–2 files, integration | sonnet |
-| Subtle / high-consequence — concurrency, security, the resilience or migration guardrails, multi-file | **opus** |
-| Per-task review | sonnet — **opus** for the task's hardest dimension (correctness / security / resilience) |
-| Mutation-verify · self-review | the implementing model, or **haiku** |
-| Optional tie-break on a *Critical* finding | **fable** or opus |
+| Every implementation task (tests first, then the code) | latest Sonnet · high |
+| Mutation-verify · self-review of its own diff | the implementing agent (latest Sonnet · high) |
+| Per-task review against the acceptance criteria | a different agent from the one that wrote it; Opus for the task's hardest dimension (correctness / security / resilience) |
+
+Before the first task, confirm the plan reads as approved (by the owner, in this session or in the plan file). No approval, no build.
+
+T1 work that this command would otherwise run inline in the main loop is also handed to a Sonnet high-effort agent, unless the owner says to do it inline.
 
 ## 4. Verify before claiming done
 Run the **actual** test + build commands and read the output — evidence before assertions. Some runners (e.g. `bench run-tests`) **exit 0 even on failure**, so grep `FAILED` / `ERROR`. Tests run **only on test sites**, never real / prod. The build compiles. Every acceptance criterion has a passing test that would fail without the code.
