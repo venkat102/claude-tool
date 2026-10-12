@@ -52,22 +52,38 @@ For each task / unit, smallest testable slice first:
 - **The plan turns out wrong or incomplete → stop and surface it.** The acceptance criteria are the contract; if reality contradicts them (a missing task, a wrong assumption, an impossible criterion), don't silently deviate — surface it and re-plan (`/plan-check`) or ask. Papering a plan flaw over in code is how the front gate's work gets lost.
 - **Receiving the per-task review → engage with rigor** (`receiving-code-review`) — a suggested fix that would break something, or that's simply wrong, gets pushed back on with evidence, not implemented to make the finding go away.
 
-## Model assignment (cost-aware)
-Match the model to the task; the **controller** (main loop) plans, sequences, and adjudicates at no extra agent cost. **Never run Fable per task.**
+## Model assignment (SOP)
+**Implementation starts only after the plan is approved, and is done by the latest Sonnet at high effort.** The controller (the main loop) sequences and adjudicates; it does not write the product code itself. Each task goes to an implementing agent dispatched with `model: "sonnet"` (the latest Sonnet: Sonnet 5.5 at the time of writing) and `effort: "high"`, whatever the task's size: no Haiku for "easy" tasks, no Opus for "hard" ones. A task that Sonnet cannot get right after a real attempt is a sign the plan is wrong or incomplete: stop and take it back to planning (Opus 5.5, high effort) rather than switching the implementing model.
 
-| Task | Model |
+| Task | Model · effort |
 |---|---|
-| Transcription — the plan already contains the code | **haiku** |
-| Standard implementation — prose spec, 1–2 files, integration | sonnet |
-| Subtle / high-consequence — concurrency, security, the resilience or migration guardrails, multi-file | **opus** |
-| Per-task review | sonnet — **opus** for the task's hardest dimension (correctness / security / resilience) |
-| Mutation-verify · self-review | the implementing model, or **haiku** |
-| Optional tie-break on a *Critical* finding | **fable** or opus |
+| Every implementation task (tests first, then the code) | latest Sonnet · high |
+| Mutation-verify · self-review of its own diff | the implementing agent (latest Sonnet · high) |
+| Per-task review against the acceptance criteria | a different agent from the one that wrote it; Opus for the task's hardest dimension (correctness / security / resilience) |
+
+Before the first task, confirm the plan reads as approved (by the owner, in this session or in the plan file). No approval, no build.
+
+T1 work that this command would otherwise run inline in the main loop is also handed to a Sonnet high-effort agent, unless the owner says to do it inline.
 
 ## 4. Verify before claiming done
 Run the **actual** test + build commands and read the output — evidence before assertions. Some runners (e.g. `bench run-tests`) **exit 0 even on failure**, so grep `FAILED` / `ERROR`. Tests run **only on test sites**, never real / prod. The build compiles. Every acceptance criterion has a passing test that would fail without the code.
 
 **UI changes are opened in real Chrome through Playwright before they are called done.** Component tests cannot see layout, focus, transitions or container queries. Serve the branch on its own port (confirm the page really is this tree), answer the API in the script or use a test site, then check: desktop / laptop / phone widths with no sideways scroll (the document **and** every inner scroll area), long and empty content, every control operated with real key presses and focus landing and returning correctly, accessible names, no page errors. Take screenshots and read them. Re-run after every later UI change. For the Jarvis SPAs use `tools/ui-browser-check/` from the claude-tool repo (`run.sh <frontend-dir> <check.mjs>`, `example.mjs`, README; local copy at `~/review/tools/ui-browser-check/`).
+
+## The pipeline (fixed order, non-negotiable)
+
+PLAN → BUILD → CODE REVIEW → FLOW REVIEW → GREEN → COMMIT → PR
+
+This is the team's development pipeline. It used to be a `CLAUDE.md` inside the product repository; it lives here now, so it applies wherever these commands are used.
+
+1. **No code without an approved plan.** Planning is `/architect` and `/plan-check`, done by Opus 5.5 at high effort. The plan is written to `.claude/workflow/plans/` in the working tree (untracked) and must read `STATUS: APPROVED`, by the owner, before anything is built.
+2. **Implementation is `/implement`**, and starts only once the plan is approved. Every task is built by the latest Sonnet at high effort.
+3. **No `git commit` until an adversarial reviewer has written `VERDICT: GREEN`** in BOTH `.claude/workflow/reviews/latest-code.md` and `.claude/workflow/reviews/latest-flow.md` for the current change set. The reviewer is a fresh agent, never the one that wrote the code.
+4. **No PR until a flow review passed on the final state being pushed**: actually executed against the running app (Playwright in real Chrome). Any change after the last flow review makes it stale: run it again. For a change with nothing to run (documentation only), say so in the PR instead.
+5. **RED verdict → fix every BLOCKER and MAJOR → full re-review.** Findings are never argued away or self-downgraded; only the reviewer withdraws a finding.
+6. **Scope changes mid-build go back to planning** for re-approval first.
+
+The goal: strict reviews, high-grade code quality, an architecture that survives adversarial testing. When in doubt, the stricter interpretation wins.
 
 ## 5. Hand off
 - Run **`/review-loop`** on the branch — the back gate verifies the whole diff against the full acceptance-criteria set, in the same dimension vocabulary.

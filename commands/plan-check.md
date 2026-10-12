@@ -28,7 +28,7 @@ Read the plan plus the code it will touch; state ground-truth facts (what exists
 - **Ask the human for the facts only they have — up front.** Production topology and current values, which environments exist, whether something is live, what's configured (e.g. mail). Put these as a short "facts I need from you" list at the start of cycle 1, not mid-loop; never rely on a remembered fact that may be stale — confirm it.
 
 ## 3. Dispatch the panel — the SAME dimensions as /review-loop, in DESIGN-CRITIC mode
-One **fresh design-critic per dimension**, in parallel each cycle, each on the model assigned in **Model assignment** below (cost-aware — Opus for the load-bearing judgment dimensions, Sonnet for the rest, **not Fable-per-dimension**). **Never drop a floor dimension.** Each asks, for its lane: *what could go wrong, what is the plan silent about, what decision is being made implicitly, and what must be true for this to be correct / safe / operable?*
+One **fresh design-critic per dimension**, in parallel each cycle, each on **Opus 5.5 at high effort** (see **Model assignment** below). **Never drop a floor dimension.** Each asks, for its lane: *what could go wrong, what is the plan silent about, what decision is being made implicitly, and what must be true for this to be correct / safe / operable?*
 
 ### Always-on planning dimensions
 - **Problem & success definition** — are we solving the **right problem**, framed crisply? The user need / job-to-be-done behind the request (not just the requested solution); **measurable success criteria** — how we'll know it worked; who the stakeholder is and what "good" means to them. A plan that solves a fuzzy or wrong problem passes every technical dimension and still fails.
@@ -52,27 +52,12 @@ One **fresh design-critic per dimension**, in parallel each cycle, each on the m
 - **Frontend & UX** (any user-facing change) — the states (loading / empty / error / success), the flow and the one primary action, accessibility, i18n, and **design-system conformance** are designed up front, not retrofitted. Pull the full checklist from `/review-loop`'s Frontend + UX lanes. **The acceptance criteria must include a real-Chrome check through Playwright** (widths, keyboard path, focus, long content, screenshots read) naming the screens and states it will cover — a UI plan whose only proof is component tests is under-designed.
 - **Deployment, rollout & migration** (schema / data patch / flag / config / deps / infra) — migration reversible + idempotent + **tested on populated data**; backfill bounded / resumable; **how existing records / users / state transition to the new behavior** (backfill / grandfather / dual-run) — distinct from schema mechanics; feature-flag default + **rollback rung**; cross-repo deploy order; a clear rollback path; **rollout validation** — how we prove it works in prod (flagged / canary / dogfood rollout, what we watch during it, the rollback trigger).
 
-## Model assignment (cost-aware)
-Use the **least-capable model that does the dimension well**. The **controller** (main loop) scouts, aggregates, adjudicates, and runs the coverage gate at no extra agent cost.
+## Model assignment (SOP)
+**Planning is done by Opus 5.5 at high effort.** Every design critic in this command, on every dimension and in every cycle, and the regression-sweep critic, is dispatched with `model: "opus"` and `effort: "high"`. The controller (the main loop) scouts, aggregates and adjudicates on Opus 5.5 at high effort as well. No Sonnet, Haiku or Fable in planning.
 
-- **opus** — the **load-bearing judgment** dimensions, where getting it wrong is expensive.
-- **sonnet** — the **default** for the rest.
-- **haiku** — mechanical checks / bookkeeping.
-- **fable** — expensive; **never per-dimension**. Reserve for a single **optional** tie-break on a load-bearing approach / resilience / correctness call.
+If the session's own model is not Opus 5.5, say so at the start and give the aggregation and the hardened plan to an Opus 5.5 high-effort agent rather than writing them in the main loop.
 
-| Dimension | Model |
-|---|---|
-| Problem & success definition | **opus** |
-| Approach & alternatives | **opus** |
-| Correctness & stability | **opus** |
-| Security & data handling | **opus** |
-| Resilience & failure modes (code, flow, mechanisms) | **opus** |
-| Scope · Incremental delivery · Assumptions · Risks/deps/sequencing | sonnet |
-| Performance, concurrency & cost | sonnet |
-| Edge cases · Maintainability & API · Testing strategy | sonnet |
-| Operability & observability | sonnet |
-| Frontend & UX | sonnet |
-| Deployment, rollout & migration | sonnet → **opus** when it's the core of the change (data migration / rollout is load-bearing) |
+Dimensions may still be GROUPED onto fewer critics to respect a workflow size limit (related dimensions together); no dimension may be dropped, and none may run on a smaller model.
 
 ## 4. Loop to a coverage-gated green
 - Aggregate every dimension's findings. For each **gap**, either the plan is revised / a design decision is made, or it is recorded as a **deliberate, explicit deferral** — never a silent one.

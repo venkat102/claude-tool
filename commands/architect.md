@@ -62,18 +62,19 @@ Then **classify and state the tier** (blast radius × reversibility). Never assu
 - **Ask the user immediately** whenever planning surfaces an ambiguity or a decision — no silent guesses, through planning as much as understanding.
 - **Seed the acceptance criteria** (per dimension) so `/plan-check` verifies against them and `/implement` builds to them. For any UI work, one criterion is always: **verified in real Chrome through Playwright** (which screens, which widths, the keyboard path, the states) — and when the design itself is a layout question, open the existing screen in Chrome first rather than designing from the source.
 
-## Model assignment (cost-aware)
-The **controller** (main loop) drives the dialogue, convergence, planning, and adjudication at no extra agent cost. Use the least-capable model that does each role well; **never run `fable` per lens**.
+## Model assignment (SOP)
+**Planning is done by Opus 5.5 at high effort.** That covers every role in this command: the controller (the main loop: dialogue, convergence, the plan itself) and every agent it dispatches. Dispatch each agent with `model: "opus"` and `effort: "high"`. No Sonnet, Haiku or Fable in planning, not even for the mechanical searches: a wrong fact in a plan costs a build cycle.
 
-| Role | Model |
+If the session's own model is not Opus 5.5, say so at the start and hand the planning work (synthesis and the written plan included) to an Opus 5.5 high-effort agent rather than writing it in the main loop.
+
+| Role | Model · effort |
 |---|---|
-| Codebase / evidence explorers | sonnet (**haiku** for mechanical greps) |
-| POV lens generators | sonnet |
-| Reliability lens · lateral / out-of-box agent · judge / synthesis | **opus** |
-| Web-research agent | sonnet |
-| Spike (throwaway PoC) | sonnet → **opus** if subtle |
-| Controller: dialogue / convergence / planning | main loop |
-| Optional tie-break on a *Critical* approach call | **fable** or opus |
+| Controller: dialogue / convergence / the plan | Opus 5.5 · high |
+| Codebase / evidence explorers · web research | Opus 5.5 · high |
+| POV lenses · reliability lens · lateral option · judge / synthesis | Opus 5.5 · high |
+| Spike (throwaway PoC) | Opus 5.5 · high |
+
+**The plan needs the owner's approval before anything is built.** Implementation is a different stage with a different model: see `/implement`.
 
 ## 6. Output — the agreed solution + plan
 1. **Tier** + the **real problem / success criteria** (evidence-backed).
