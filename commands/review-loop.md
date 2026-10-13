@@ -23,7 +23,7 @@ Respect the project's `CLAUDE.md` and any memory (trunk name, test sites, conven
 Read the diff plus enough surrounding code to state ground-truth facts. Write a short **shared review-context file** (ground-truth + the per-lane report shape) handed to every reviewer, so each dispatch names only its own lane.
 
 ## 3. Dispatch the panel — the mandatory Phase-1 eight-lane FLOOR
-One **fresh reviewer per lane**, dispatched **in parallel** each cycle, each on the model assigned in **Model assignment** below (cost-aware — Opus / Sonnet / Haiku by lane difficulty, **not Fable-per-lane**). **Never drop a floor lane** — no "the change looks small" exception. Each reviewer stays strictly in its lane, is exhaustive (trickling findings wastes cycles), and carries its `quality-code-review` slice.
+One **fresh reviewer per lane**, dispatched **in parallel** each cycle, each on the model assigned in **Model assignment** below (Sonnet for every lane). **Never drop a floor lane** — no "the change looks small" exception. Each reviewer stays strictly in its lane, is exhaustive (trickling findings wastes cycles), and carries its `quality-code-review` slice.
 
 | Lane (ALWAYS dispatched) | Guards (quality-code-review § where it maps) |
 |---|---|
@@ -36,7 +36,7 @@ One **fresh reviewer per lane**, dispatched **in parallel** each cycle, each on 
 | **Resilience & failure modes — code, flow, and handling mechanisms** | **Code level, per dependency:** **down / times out**, a process **dies mid-operation**, or a message is **lost** — **no permanent stuck state**; recovery is *guaranteed*, not solely dependent on one cron/scheduler; idempotent / replay-safe / retry-safe; **fail-closed vs fail-open chosen deliberately**; graceful degradation; bounded queues & timeouts. **Flow level — trace the whole end-to-end path the change lives in** (e.g. request → queue → worker → external call → callback → state write, *across process / service seams*): stress **every hop and handoff** — failed / slow / duplicated / out-of-order / lost — and confirm the **flow as a whole** reaches a consistent terminal state or safely recovers; **no orphaned or half-written state** from a partial run; each step idempotent so a retry of the whole flow is safe; the **recovery / reconciliation path exists, is itself tested, and cannot itself wedge**. **Mechanism level — audit the failure-handling machinery itself:** retry (backoff + cap + idempotency), timeout, circuit-breaker, dead-letter / poison-message handling, compensation / rollback / saga, fallback / degradation, errors **propagated not swallowed**, at-least-once vs exactly-once chosen on purpose, and an **alert on failure** — each present where the risk warrants, correct, and **not itself a new failure source**. The code-only view misses exactly the cross-step seams and half-built mechanisms where reliability is actually won or lost |
 | **Operability & observability** | §8 — Google-able error titles, before→after values, preserved tracebacks; **plus:** if this silently breaks in prod, will we get an **alert**? is there a metric / log / dashboard to diagnose it and a runbook? what is the time-to-detect? no critical path fails silently |
 
-**Plus one always-on pass, treated differently — Approach & simplification** *(surfaced, not gated)*: a fresh reviewer (opus) asking, now that the **real code** exists, **is there a materially better / simpler / more reliable way to achieve the same goal?** — a different design, an **existing primitive to reuse instead of a bespoke build**, a whole class of failure designed out. Concrete probes: **compare directly instead of hashing / fingerprinting small non-secret data**; **reuse an existing primitive instead of a bespoke build**; **send / compare the values instead of a derived token**; **drop a layer whose only job is guarding complexity the design itself introduced**. Flag only **material** wins (reliability, correctness, a big simplification), never style or preference. Unlike a floor lane its output is **not** a fix and does **not** block the green: it is **raised with the user to discuss (§5)** — the built approach may be entirely correct even when a better one exists, and switching is the user's call, never a silent rewrite. (This is the back-gate echo of `/plan-check`'s *Approach & alternatives*: a better design is often only visible once the code is real.)
+**Plus one always-on pass, treated differently — Approach & simplification** *(surfaced, not gated)*: a fresh reviewer (sonnet) asking, now that the **real code** exists, **is there a materially better / simpler / more reliable way to achieve the same goal?** — a different design, an **existing primitive to reuse instead of a bespoke build**, a whole class of failure designed out. Concrete probes: **compare directly instead of hashing / fingerprinting small non-secret data**; **reuse an existing primitive instead of a bespoke build**; **send / compare the values instead of a derived token**; **drop a layer whose only job is guarding complexity the design itself introduced**. Flag only **material** wins (reliability, correctness, a big simplification), never style or preference. Unlike a floor lane its output is **not** a fix and does **not** block the green: it is **raised with the user to discuss (§5)** — the built approach may be entirely correct even when a better one exists, and switching is the user's call, never a silent rewrite. (This is the back-gate echo of `/plan-check`'s *Approach & alternatives*: a better design is often only visible once the code is real.)
 
 **ADD lanes when the diff warrants** (floor is a floor, not a ceiling): the **Frontend lane** below whenever the diff touches UI (component files, templates, stylesheets, or a client / frontend source tree); the **UX & usability lane** below whenever the change is user-facing (a UI diff, or any change to a user-facing flow, message, error, default, or interaction — even from backend code); the **Deployment & migration lane** below whenever the diff touches migrations, data patches, feature flags, config, dependencies, or infra; the **chat-safety / shared-component** lane for chat changes; plus anything named in the trailing instructions.
 
@@ -78,15 +78,16 @@ Judge the **experience**, not just the mechanics — grounded in established usa
 - **Motion & transitions** — animation is purposeful (guides attention, shows what changed or where it went), never decorative filler; state changes are **perceivable**, not abrupt; timing and easing feel right and never block the user; all of it collapses cleanly under reduced-motion.
 
 ### Real-browser gate — mandatory whenever the Frontend or UX lane runs
-Reading the code and passing component tests is **not** a UI review. Whenever the diff touches UI, the screen is **opened in real Chrome through Playwright and looked at**, every cycle, on the exact branch state being judged. A headless DOM has no layout, no real focus, no transitions and no container queries, so it cannot see the defects this gate exists for.
+Reading the code and passing component tests is **not** a UI review. Whenever the diff touches UI, the screen is **opened in real Chrome through Playwright and looked at**, on the exact branch state being judged (the first cycle, and again on the final tree if anything changed since). A headless DOM has no layout, no real focus, no transitions and no container queries, so it cannot see the defects this gate exists for.
 
-- **Run it, don't describe it.** The controller (or one dedicated reviewer) writes a check script and executes it; "needs a browser check" is not an acceptable finding or verdict.
+- **Run it, don't describe it.** A check script is written (by Sonnet: it is code) and executed; "needs a browser check" is not an acceptable finding or verdict.
+- **Who runs it:** a **Haiku** agent runs the scripts, applies their pass rule, reads the screenshots and reports literally what the outputs say. It edits nothing.
 - **What it must cover:** the screen at desktop, laptop and phone widths (1440 / 1100 / 375 / 320) with **no sideways scroll — measured on the document AND inside every scroll area**; realistic long content (long names, many rows, empty, error); every control reached and operated **with real key presses** (Tab, Enter, Escape) including what opens, where focus lands, and where it returns; accessible names of icon-only controls; both themes when the screen supports them; no page errors.
 - **Look at the screenshots.** Take them and read them — a passing assertion on the wrong page proves nothing.
 - **Evidence comes from the tree that will merge.** Serve the branch under review on its own port and confirm the page really is that tree (another session may already be serving a different one on the default port). A result from another branch, or from a file copied across, does not count.
 - **No real data.** Answer the API in the script (`page.route`) or use a test site; never a production or shared site.
 - **How:** the Playwright *library* with `chromium.launch({ channel: "chrome" })`. For the Jarvis SPAs use `tools/ui-browser-check/` from the claude-tool repo (`run.sh <frontend-dir> <check.mjs>`, `example.mjs`, README; local copy at `~/review/tools/ui-browser-check/`).
-- **Coverage gate:** a UI diff with no executed browser run this cycle = the Frontend and UX lanes are **not covered = not green**. Any change after the last run makes it stale; run it again.
+- **Coverage gate:** a UI diff with no executed browser run on the tree being judged GREEN = the Frontend and UX lanes are **not covered = not green**. Any change after the last run makes it stale; run it again.
 
 ### Deployment, rollout & migration lane — dispatch whenever the diff touches migrations, data patches, feature flags, config, dependencies, or infra
 A dedicated reviewer covering, exhaustively. Framework-agnostic:
@@ -99,33 +100,32 @@ A dedicated reviewer covering, exhaustively. Framework-agnostic:
 - **Config & secrets** — new config / env vars are documented with safe defaults; secrets go through the proper store, never plaintext or logs; nothing environment-specific is hardcoded.
 
 ## Model assignment (cost-aware)
-Use the **least-capable model that does the lane well** — don't pay Opus/Fable rates for a lane a cheaper model nails. The **controller** (main loop) does scouting, aggregation, adjudication, and the coverage gate at no extra agent cost.
+**Reviews run on Sonnet. Browser testing runs on Haiku.** The **controller** (main loop) does scouting, aggregation, adjudication, and the coverage gate at no extra agent cost.
 
-- **opus** — deepest reasoning, highest cost; reserve for the subtle, high-consequence lanes.
-- **sonnet** — the **default** workhorse.
-- **haiku** — fast & cheap: mechanical lanes + bookkeeping.
-- **fable** — expensive; **never per-lane**. Reserve for a single **optional** high-stakes tie-break / independent second opinion on a *Critical* correctness / security / resilience finding, where its specialization earns the cost.
-
-| Lane | Model |
+| Work | Model |
 |---|---|
-| Correctness & stability | **opus** |
-| Security & data handling | **opus** |
-| Performance & concurrency | **opus** |
-| Resilience & failure modes (code + flow + mechanisms) | **opus** |
-| Approach & simplification (surfaced, not gated) | **opus** |
-| Edge cases & gaps | sonnet |
-| Testing & test quality | sonnet |
-| Operability & observability | sonnet |
-| Frontend · UX & usability · chat-safety | sonnet |
-| Deployment, rollout & migration | sonnet → **opus** if a data migration / backfill is in the diff |
-| Maintainability: readability / DRY / API | **haiku** → sonnet if a public API / contract changes |
-| Completeness critic | **haiku** |
-| Adversarial verify of a *Critical* finding (optional) | **fable** or opus |
+| Every review lane: the eight floor lanes, Frontend, UX & usability, Deployment, chat-safety | **sonnet** |
+| Approach & simplification (surfaced, not gated) | **sonnet** |
+| The reviewer that writes the code verdict (`latest-code.md`) · the sweep reviewer of a later cycle | **sonnet** |
+| Browser testing: the real-browser gate and the flow review (run the check scripts in Chrome, apply their pass rule, read the screenshots, write `latest-flow.md`) | **haiku** |
+| Completeness critic · bookkeeping | **haiku** |
+| Writing or changing a check script (it is code) | **sonnet**, like any implementation task |
+
+No Opus and no Fable in a review, unless the owner asks for one on a named finding.
+
+## Testing budget (keep it proportionate)
+The gates stay: a GREEN code verdict, a GREEN flow verdict, and UI checked in real Chrome. The time and tokens spent around them are kept low:
+
+- **Cycle 1 is the full panel. From cycle 2 on it is ONE sweep reviewer** over the fix diff: it confirms each BLOCKER / MAJOR is closed and checks the fix against every lane. A single lane is re-dispatched only when the fix rewrote that lane's area. Say plainly which lanes ran; a sweep is never described as a full-panel pass.
+- **The browser run executes the scripts that exist, once, on the tree being judged.** A script that fails is run one more time and BOTH results are reported. No new exploratory probe scripts on a re-run. A step is added only for behaviour a fix introduces.
+- **A mutation run proves a rule a change introduces: one per rule, not one per assertion.** Mutation evidence is not re-run just because a script was edited elsewhere.
+- **Check scripts get one review.** A second round only when the first found a BLOCKER or MAJOR in them.
+- An unusually risky change may need more. Say so in one line and ask the owner, rather than silently doing either.
 
 ## 4. Loop to a coverage-gated green
 - Aggregate all lane findings → **one fix wave** for every Critical/Important across all lanes.
 - **Two buckets, not one.** Defects → the fix wave. A **materially better approach** the review surfaced does **not** enter the fix wave and does **not** block the green — collect it and **raise it with the user to discuss (§5)**; the current approach may be perfectly correct even when a better one exists, and adopting the alternative is the user's decision, never a silent rewrite.
-- Re-dispatch the **full panel** (fresh reviewers) next cycle. Findings should **narrow each cycle** (converging).
+- Next cycle: **one sweep reviewer** (fresh) over the fix diff, per **Testing budget**; the full panel is cycle 1 only. Findings should **narrow each cycle** (converging).
 - **Coverage gate:** declare GREEN only when **every floor lane returned an explicit verdict** (`CONFIRMED-clean | findings[]`). A lane that never reported = not covered = **not green** (visibly missing, never silently skipped).
 - Optional last step: a **completeness critic** — "which Phase-1 concern was named but not genuinely exercised?"
 
@@ -135,7 +135,7 @@ Present findings **most-severe-first** with `file:line`, the concrete failure sc
 Then, as a **distinct section — "Alternatives to discuss"** — list any **materially better approach** the review surfaced: the current approach, the alternative, the concrete tradeoff (reliability / simplicity / cost / effort), and a recommendation. **Pause and discuss these with the user before finalizing** — they are decisions to make together, never adopted or dropped unilaterally. (Empty section when the review found none — say so, don't omit it.)
 
 ## Verdict files (the pipeline's gate)
-When the review is the gate before a commit, its result is written to `.claude/workflow/reviews/latest-code.md` (the code review) and `.claude/workflow/reviews/latest-flow.md` (the flow review, executed against the running app) in the working tree, each starting with a first line that is exactly `VERDICT: GREEN` or `VERDICT: RED`. RED if any BLOCKER or MAJOR stands. Nothing is committed on anything but GREEN in both, and any change after a GREEN makes both stale. The full pipeline is in `/implement` ("The pipeline").
+When the review is the gate before a commit, its result is written to `.claude/workflow/reviews/latest-code.md` (the code review) and `.claude/workflow/reviews/latest-flow.md` (the flow review, executed against the running app) in the working tree, each starting with a first line that is exactly `VERDICT: GREEN` or `VERDICT: RED`. The code verdict is written by a Sonnet reviewer, the flow verdict by the Haiku agent that ran the browser checks. RED if any BLOCKER or MAJOR stands. Nothing is committed on anything but GREEN in both, and any change after a GREEN makes both stale. The full pipeline is in `/implement` ("The pipeline").
 
 ## Guardrails
 - **Consequence order for the fix decision:** correctness → security → perf → concurrency → readability/DRY. Readability/DRY are usually **Minor** (don't block) unless DRY is duplicated **logic** / forked implementations → **Important**.

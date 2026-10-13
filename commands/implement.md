@@ -59,7 +59,8 @@ For each task / unit, smallest testable slice first:
 |---|---|
 | Every implementation task (tests first, then the code) | latest Sonnet · high |
 | Mutation-verify · self-review of its own diff | the implementing agent (latest Sonnet · high) |
-| Per-task review against the acceptance criteria | a different agent from the one that wrote it; Opus for the task's hardest dimension (correctness / security / resilience) |
+| Per-task review against the acceptance criteria | a different agent from the one that wrote it, on Sonnet |
+| Browser check of a UI task (run the check scripts in Chrome, read the screenshots) | Haiku; the check script itself is written by Sonnet |
 
 Before the first task, confirm the plan reads as approved (by the owner, in this session or in the plan file). No approval, no build.
 
@@ -68,7 +69,7 @@ T1 work that this command would otherwise run inline in the main loop is also ha
 ## 4. Verify before claiming done
 Run the **actual** test + build commands and read the output — evidence before assertions. Some runners (e.g. `bench run-tests`) **exit 0 even on failure**, so grep `FAILED` / `ERROR`. Tests run **only on test sites**, never real / prod. The build compiles. Every acceptance criterion has a passing test that would fail without the code.
 
-**UI changes are opened in real Chrome through Playwright before they are called done.** Component tests cannot see layout, focus, transitions or container queries. Serve the branch on its own port (confirm the page really is this tree), answer the API in the script or use a test site, then check: desktop / laptop / phone widths with no sideways scroll (the document **and** every inner scroll area), long and empty content, every control operated with real key presses and focus landing and returning correctly, accessible names, no page errors. Take screenshots and read them. Re-run after every later UI change. For the Jarvis SPAs use `tools/ui-browser-check/` from the claude-tool repo (`run.sh <frontend-dir> <check.mjs>`, `example.mjs`, README; local copy at `~/review/tools/ui-browser-check/`).
+**UI changes are opened in real Chrome through Playwright before they are called done.** Component tests cannot see layout, focus, transitions or container queries. Serve the branch on its own port (confirm the page really is this tree), answer the API in the script or use a test site, then check: desktop / laptop / phone widths with no sideways scroll (the document **and** every inner scroll area), long and empty content, every control operated with real key presses and focus landing and returning correctly, accessible names, no page errors. Take screenshots and read them. Re-run on the final tree if the UI changed after the last run. **Keep testing proportionate** (`/review-loop`, "Testing budget"): run the scripts that exist, add a step only for behaviour a change introduces, one mutation run per rule a change introduces. For the Jarvis SPAs use `tools/ui-browser-check/` from the claude-tool repo (`run.sh <frontend-dir> <check.mjs>`, `example.mjs`, README; local copy at `~/review/tools/ui-browser-check/`).
 
 ## The pipeline (fixed order, non-negotiable)
 
@@ -78,9 +79,9 @@ This is the team's development pipeline. It used to be a `CLAUDE.md` inside the 
 
 1. **No code without an approved plan.** Planning is `/architect` and `/plan-check`, done by Opus 5.5 at high effort. The plan is written to `.claude/workflow/plans/` in the working tree (untracked) and must read `STATUS: APPROVED`, by the owner, before anything is built.
 2. **Implementation is `/implement`**, and starts only once the plan is approved. Every task is built by the latest Sonnet at high effort.
-3. **No `git commit` until an adversarial reviewer has written `VERDICT: GREEN`** in BOTH `.claude/workflow/reviews/latest-code.md` and `.claude/workflow/reviews/latest-flow.md` for the current change set. The reviewer is a fresh agent, never the one that wrote the code.
+3. **No `git commit` until an adversarial reviewer has written `VERDICT: GREEN`** in BOTH `.claude/workflow/reviews/latest-code.md` and `.claude/workflow/reviews/latest-flow.md` for the current change set. The reviewer is a fresh agent, never the one that wrote the code: a Sonnet reviewer for the code verdict, a Haiku agent running the browser checks for the flow verdict.
 4. **No PR until a flow review passed on the final state being pushed**: actually executed against the running app (Playwright in real Chrome). Any change after the last flow review makes it stale: run it again. For a change with nothing to run (documentation only), say so in the PR instead.
-5. **RED verdict → fix every BLOCKER and MAJOR → full re-review.** Findings are never argued away or self-downgraded; only the reviewer withdraws a finding.
+5. **RED verdict → fix every BLOCKER and MAJOR → re-review** (one sweep reviewer over the fix diff; the full panel is cycle 1 only: `/review-loop`, "Testing budget"). Findings are never argued away or self-downgraded; only the reviewer withdraws a finding.
 6. **Scope changes mid-build go back to planning** for re-approval first.
 
 The goal: strict reviews, high-grade code quality, an architecture that survives adversarial testing. When in doubt, the stricter interpretation wins.
