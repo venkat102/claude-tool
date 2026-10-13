@@ -34,23 +34,23 @@ if lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then echo "ERRORS port $
 TMP=${TMPDIR:-/tmp}/ui-browser-check-$$
 mkdir -p "$TMP"
 printf '{"socketio_port": 9000, "webserver_port": 8000}\n' > "$TMP/common_site_config.json"
-NAME=zz_ui_check_$$.mjs
-cp "$HERE/vite.wrapper.config.mjs" "$F/zz_vite_ui.config.mjs"
+NAME=zz_ui_check_$$.mjs; CFG=zz_vite_ui_$$.config.mjs
+cp "$HERE/vite.wrapper.config.mjs" "$F/$CFG"
 cp "$C" "$F/$NAME"
 cd "$F" || exit 1
 # frappe-ui's Vite plugin derives the dev port from the bench web port: 8080 + (web port - 8000).
 WEB=$((8000 + PORT - 8080))
 UI_CHECK_SITE_CONFIG="$TMP/common_site_config.json" FRAPPE_WEB_SERVER_PORT=$WEB \
-  node node_modules/vite/bin/vite.js --config zz_vite_ui.config.mjs --strictPort > "$TMP/vite.out" 2>&1 &
+  node node_modules/vite/bin/vite.js --config $CFG --strictPort > "$TMP/vite.out" 2>&1 &
 VITE=$!
 i=0
 until curl -s -m 2 -o /dev/null "http://localhost:$PORT/" || [ $i -ge 30 ]; do sleep 1; i=$((i+1)); done
 if ! grep -q "localhost:$PORT" "$TMP/vite.out"; then
   echo "ERRORS dev server did not start on $PORT"; tail -5 "$TMP/vite.out"
-  kill $VITE 2>/dev/null; rm -f "$F/zz_vite_ui.config.mjs" "$F/$NAME"; exit 1
+  kill $VITE 2>/dev/null; rm -f "$F/$CFG" "$F/$NAME"; exit 1
 fi
 BASE="http://localhost:$PORT" timeout 300 node "$NAME" 2>&1 | grep -E "^(URL|ERRORS|PASS|FAIL|RESULT|SHOT|PROBE)|Error" | cut -c1-600
 kill $VITE 2>/dev/null
-rm -f "$F/zz_vite_ui.config.mjs" "$F/$NAME"
+rm -f "$F/$CFG" "$F/$NAME"
 grep -n "rror" "$TMP/vite.out" | grep -v "    at \|ECONNREFUSED\|proxy error" | cut -c1-240 | sort -u | head -4
 rm -rf "$TMP"
