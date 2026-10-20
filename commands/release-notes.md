@@ -1,5 +1,5 @@
 ---
-description: Jarvis release-notes generator — turn a set of merged PRs from any Jarvis repo (app, control plane, fleet-agent, plugin, persona, helpdesk), or whole release PRs, into customer-facing, grouped release notes (New / Improvements / Fixes / Action needed) ready to paste into a Jarvis Changelog. User-facing only; internal changes are dropped.
+description: Jarvis release-notes generator — turn a set of merged PRs from any Jarvis repo (app, control plane, fleet-agent, plugin, persona, helpdesk), or whole release PRs, into customer-facing, grouped release notes (Highlights / Action needed / New / Improvements / Fixes / For admins) ready to paste into a Jarvis Changelog. User-facing only; internal changes are dropped.
 argument-hint: "<pr refs — numbers, repo#N, URLs, or release PRs; comma- or newline-separated>"
 ---
 
@@ -83,27 +83,39 @@ When a PR is genuinely mixed (a customer-facing change plus internal cleanup), k
 
 ## Step 3 — write the notes
 
-Group the surviving PRs under only the headings that have content:
+Readers skim. Most stop after the first few lines, so the order and length matter as much as the wording.
+
+Use these groups, in this order, and only the ones that have content:
 
 ```
+### 🌟 Highlights
+### ⚠️ Action needed
 ### ✨ New
 ### ⚡ Improvements
 ### 🐛 Fixes
-### ⚠️ Action needed
+### 👤 For admins
 ```
 
+- **🌟 Highlights** — the 3 to 5 changes most customers will care about. An item here is NOT repeated in another group.
+- **⚠️ Action needed** — anything the customer or their admin must *do*: update to get a capability, a changed default, a new setting, a breaking change. Say exactly what to do and who it applies to ("If you run your own server, ..."). It comes second so nobody misses it.
 - **✨ New** — capabilities the customer did not have before.
-- **⚡ Improvements** — existing things now faster / clearer / more capable.
-- **🐛 Fixes** — bugs the customer was hitting, now resolved.
-- **⚠️ Action needed** — anything the customer or their admin must *do*: update to get a capability, a changed default, a new setting, a breaking change. Be specific about the action.
+- **⚡ Improvements** — existing things now faster / clearer / more capable. Fold small polish into one closing "Also: ..." line.
+- **🐛 Fixes** — bugs the customer was hitting, now resolved. List at most about 10, the ones customers actually noticed, then one "Plus smaller fixes to ..." line naming the rest by area.
+- **👤 For admins** — anything only a site admin sees or can do (admin tabs, admin settings, reviewer roles, admin-only security). Keeps these out of everyone else's way.
+
+Length: aim for **30 bullets or fewer** in total. If you are over, merge related items and move the rest into the "Also" / "Plus smaller fixes" lines rather than dropping them silently.
 
 Writing rules:
-- **Customer voice, benefit-first.** Translate the engineering ("refactor `_status_from_ctx`") into what the customer gets ("the update banner now shows how far behind you are"). One line per item; lead with the value, not the mechanism.
-- **No jargon, no PR numbers, no internal names** (no doctype names, function names, repo names, ticket ids) in the notes themselves.
+- **Customer voice, benefit-first.** Translate the engineering ("refactor `_status_from_ctx`") into what the customer gets ("the update banner now shows how far behind you are"). Lead with the value, not the mechanism.
+- **One line per bullet**, about 20 words at most. Details belong in help docs, not here. Only the "Also" / "Plus smaller fixes" summary lines may run longer.
+- **Plain words.** No PR numbers and no internal names (doctype, function, repo, ticket, tool names). Also avoid technical terms a business user would not use, and say what they mean instead, for example: child table → "each line"; grid columns → "visible columns"; HTTP 4xx/5xx → "an error some users saw"; queue or slot → "waiting to start"; worker → "background process"; Markdown → "editable text file"; endpoint, API, payload, cache → describe the effect.
+- **Vary the openings.** Do not start most bullets with "Now", "No longer" or "Jarvis". Start with the thing the customer touches ("Long chats ...", "Your edits ...", "Record cards ...").
+- **Links only when real.** Add a short "Learn more" link to a Highlight or New item only when the PR or the operator gives a real help-page URL. Never invent one; when none exists, say so in the accounting.
 - **No em-dashes** anywhere (Jarvis house style). Use a comma, a full stop, or "and". This is a hard rule — these notes render in the customer's What's-new panel and email.
 - **Never invent.** If a PR's title/body does not make its customer impact clear, put it in the omitted list with "unclear customer impact" rather than guessing a benefit.
-- Keep the whole thing scannable: short bullets, no preamble, no closing line, no title heading (the version and title are separate fields in Create Release).
-- Within a group, put the changes most customers will notice first.
+- No preamble, no closing line, no title heading (the version and title are separate fields in Create Release).
+
+Before printing, check the draft: bullet count, longest bullet, no em-dash, no `#<n>`, none of the technical terms above, and how many bullets share an opening word.
 
 ## Step 4 — output
 
