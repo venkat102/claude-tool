@@ -92,21 +92,35 @@ Use these groups, in this order, and only the ones that have content:
 ### ⚠️ Action needed
 ### ✨ New
 ### ⚡ Improvements
+### 🔁 Changed or removed
 ### 🐛 Fixes
 ### 👤 For admins
+### 🧭 Known issues
 ```
 
 - **🌟 Highlights** — the 3 to 5 changes most customers will care about. An item here is NOT repeated in another group.
 - **⚠️ Action needed** — anything the customer or their admin must *do*: update to get a capability, a changed default, a new setting, a breaking change. Say exactly what to do and who it applies to ("If you run your own server, ..."). It comes second so nobody misses it.
 - **✨ New** — capabilities the customer did not have before.
 - **⚡ Improvements** — existing things now faster / clearer / more capable. Fold small polish into one closing "Also: ..." line.
+- **🔁 Changed or removed** — something that moved, was renamed, now behaves differently, or is gone or going away. Always say where it is now or what to use instead ("Macros for all users moved to the Admin tab on the Macros page"). If the customer must act, it belongs in Action needed instead.
 - **🐛 Fixes** — bugs the customer was hitting, now resolved. List at most about 10, the ones customers actually noticed, then one "Plus smaller fixes to ..." line naming the rest by area.
 - **👤 For admins** — anything only a site admin sees or can do (admin tabs, admin settings, reviewer roles, admin-only security). Keeps these out of everyone else's way.
+- **🧭 Known issues** — only problems a PR or the operator states are still open in this release, each with a workaround if one exists. Never guess one; omit the group when there are none.
+
+Within every group, put the change that affects the most customers first.
+
+**Security fixes**: say plainly what is now protected ("An admin's assistant can no longer read other users' private skills"). Never describe how the gap could be used, which data was exposed, or how to reproduce it. Put admin-only ones under For admins, the rest under Fixes.
+
+**Version lines**: when the app's version lines (for example v15 and v16) carry different changes, print **one block per line**, each correct for its line, instead of one block plus a note. When they are identical, print one block and say it covers both.
 
 Length: aim for **30 bullets or fewer** in total. If you are over, merge related items and move the rest into the "Also" / "Plus smaller fixes" lines rather than dropping them silently.
 
 Writing rules:
 - **Customer voice, benefit-first.** Translate the engineering ("refactor `_status_from_ctx`") into what the customer gets ("the update banner now shows how far behind you are"). Lead with the value, not the mechanism.
+- **Present tense, "you", active voice.** "You can share a chat", not "Chats were made shareable" or "Users will be able to share".
+- **No hype.** Skip words like powerful, seamless, exciting, revolutionary, simply, just, easily, and exclamation marks. Let the change speak.
+- **Exact screen names.** Name buttons, tabs, menus and settings exactly as they appear on screen, in bold, and write navigation as **Settings > Administration > Shared chats**. Use the same name for the same thing every time.
+- **Renders anywhere.** The notes show in the What's-new panel, email and the phone app: plain bullets only, no tables, no nested bullets, no images, emoji only in the group headings.
 - **One line per bullet**, about 20 words at most. Details belong in help docs, not here. Only the "Also" / "Plus smaller fixes" summary lines may run longer.
 - **Plain words.** No PR numbers and no internal names (doctype, function, repo, ticket, tool names). Also avoid technical terms a business user would not use, and say what they mean instead, for example: child table → "each line"; grid columns → "visible columns"; HTTP 4xx/5xx → "an error some users saw"; queue or slot → "waiting to start"; worker → "background process"; Markdown → "editable text file"; endpoint, API, payload, cache → describe the effect.
 - **Vary the openings.** Do not start most bullets with "Now", "No longer" or "Jarvis". Start with the thing the customer touches ("Long chats ...", "Your edits ...", "Record cards ...").
@@ -115,11 +129,11 @@ Writing rules:
 - **Never invent.** If a PR's title/body does not make its customer impact clear, put it in the omitted list with "unclear customer impact" rather than guessing a benefit.
 - No preamble, no closing line, no title heading (the version and title are separate fields in Create Release).
 
-Before printing, check the draft: bullet count, longest bullet, no em-dash, no `#<n>`, none of the technical terms above, and how many bullets share an opening word.
+Before printing, check the draft: bullet count, longest bullet, no em-dash, no `#<n>`, none of the technical terms or hype words above, no future or passive tense, screen names in bold, no Highlight repeated in another group, and how many bullets share an opening word. Fix what fails, then print.
 
 ## Step 4 — output
 
-Print, in a single fenced block the operator can copy verbatim into the **Release notes (Markdown)** field, the grouped sections (empty groups omitted). Then, **below the block** (not inside it), print a short accounting so nothing is invisible, with every PR named as `repo#n`:
+Print, in a fenced block the operator can copy verbatim into the **Release notes (Markdown)** field, the grouped sections (empty groups omitted). When version lines differ, print one labelled block per line (`v15.x.y`, `v16.x.y`). Then, **below the block** (not inside it), print a short accounting so nothing is invisible, with every PR named as `repo#n`:
 
 ```
 _(sources: jarvis#2089 + plugin#126 + persona#275 → "share chats"; ...)_
