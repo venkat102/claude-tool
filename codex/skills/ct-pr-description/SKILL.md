@@ -25,6 +25,9 @@ Pick `<remote>` first from the repo (it can be `upstream`, not `origin`). Run
 - Empty: the open PR's base, else the trunk (`develop`, `main` or `master`).
 - Trailing text is extra focus.
 
+For a ticket ref or an empty target, check the branch identity too: the current
+branch must be the branch that holds the change. If it is unclear, ask.
+
 State the base. If it is unclear, ask. Read verdicts and plan from the worktree
 that holds the branch you describe.
 
@@ -47,14 +50,21 @@ Run it before anything is written. If a check fails, stop, name the gate, write 
   `VERDICT: RED` always blocks. An author-written verdict does not pass. A
   disclosed single-agent review passes only if the reviewer is not the author of
   the change (a separate session or agent). A self-review by the author does not
-  pass. If this is unclear, ask the owner.
-- Flow gate: `.claude/workflow/reviews/latest-flow.md` first line is exactly
-  `VERDICT: GREEN`, or starts with `VERDICT: GREEN — ` or `VERDICT: GREEN - `
-  (so `VERDICT: GREENISH` fails). It must come from an executed flow review of the
-  final state. An executed GREEN flow review passes the gate for any change,
-  backend-only included, browser or not. Stop and ask only when no executed flow
-  review exists. `VERDICT: GREEN — N/A: <reason>` passes only for documentation-only
-  changes. `VERDICT: RED` always blocks.
+  pass. Both rules have one exception: the owner may accept the disclosed
+  single-agent review in the session, in words that name the single-agent review.
+  The section 7 confirmation of the description or a bare "go ahead" is not an
+  acceptance. Read the quote in `latest-code.md` (`$ct-review-loop` puts it there)
+  and quote it in Impact Analysis. If this is unclear, ask the owner.
+- Flow gate: `.claude/workflow/reviews/latest-flow.md` must exist, for every
+  change. Its first line is exactly `VERDICT: GREEN`, or starts with
+  `VERDICT: GREEN — ` or `VERDICT: GREEN - ` (so `VERDICT: GREENISH` fails). It must
+  come from an executed flow review of the final state. An executed GREEN flow
+  review passes the gate for any change, backend-only included, browser or not.
+  A first line whose suffix says the flow did not run (N/A, skipped, not run)
+  counts as the N/A form. The N/A form passes only for documentation-only changes,
+  and the file then reads `VERDICT: GREEN — N/A: documentation only …`. A missing
+  file blocks. Stop and ask when no executed flow review exists.
+  `VERDICT: RED` always blocks.
 - Documentation only: every file in the change set ends in `.md`, `.rst`, `.txt`
   or `.adoc` (agent prompt Markdown such as `SKILL.md`, `AGENTS.md` and
   `commands/*.md` counts only when the repo has no app or build to run), and none
@@ -66,14 +76,17 @@ Run it before anything is written. If a check fails, stop, name the gate, write 
   to run" (prompt files: "documentation only (agent prompt files) — no flow
   review, nothing to run"). If unsure, ask.
 - Diff hash: for a committed change set use `git diff <remote>/<base>...HEAD | sha256sum`.
-  For an uncommitted review use `git diff <remote>/<base> | sha256sum` (working
-  tree including staged; list untracked files by name). A verdict records one of
-  these hashes with its scope.
+  For an uncommitted review, first run `git add -N <untracked change-set files outside .claude/>`,
+  then run `git diff <remote>/<base> | sha256sum` (working tree including staged).
+  A verdict records one of these hashes with its scope.
 - Staleness: a verdict is stale when a change-set file has an mtime newer than
-  the verdict, or when it names a base or branch that differs from the change set,
+  the verdict, or when it names a base or branch that differs from the change set
+  (a base that moved by SHA only is not "a base that differs"),
   or when its recorded diff hash differs from the recomputed hash. A recorded `HEAD`
   that is an ancestor of the current `HEAD` with an unchanged diff hash is NOT
-  stale. A moved base with an unchanged 3-dot diff is not stale. For a committed
+  stale. A recorded `HEAD` that is NOT an ancestor of the current `HEAD`, with no
+  recorded hash, is stale (or ask). A moved base with an unchanged 3-dot diff is
+  not stale. For a committed
   delete or rename, the commit time is not a signal (a commit after the verdict is
   normal): judge it by the diff hash, and if no hash is recorded, ask. An
   uncommitted deletion or rename is stale. After a rebase or fresh checkout,
@@ -91,17 +104,19 @@ Read `git diff <remote>/<base>...HEAD`, `git log <remote>/<base>..HEAD`, the app
 plan and its acceptance criteria, both verdicts with their cycle counts, and the
 ticket the owner names. Read `.claude/workflow/reviews/latest-test-audit.md` when
 it exists. Find every file, function, API and user flow the change touches with
-search and the code. T0/T1: inline caller search. T2/T3: one explorer per module,
-only when delegation is authorized.
+search and the code. T0/T1: inline caller search. T2/T3: one explorer per
+subsystem, at most 4 (explorers may be grouped), only when delegation is
+authorized. The cycle count may come from the implement notes or from the
+`cycle*` copies of the review files, when the verdict does not state it.
 
 ## 4. Write five sections: exact headings, exact order, none skipped or merged
 
 Use level `###` and copy the text exactly:
 
 - `### Issue Description`: what was broken or missing, who it affected, why it matters, the ticket ID.
-- `### Steps to Reproduce`: numbered steps on the base branch: environment, preconditions, data, expected and actual result.
+- `### Steps to Reproduce`: numbered steps on the base branch: environment, preconditions, data, expected and actual result. For a new feature, the steps may show the missing behaviour on the base branch.
 - `### Solution Provided`: what changed and why, each file or module with a one-line reason, alternatives if the plan records them.
-- `### Impact Analysis – Proof That Existing Flows Are Not Affected` (en dash `–`): each existing flow touching the changed code and how it was verified (unit, integration, real-browser check, or unaffected by design with the reason); each acceptance criterion mapped to evidence; both verdicts quoted with the cycle count ("cycles: not recorded" if absent); the `latest-test-audit.md` result quoted when present (evidence, not a gate); the test commands and results; risk tier, remaining risk, rollback. State anything unverified as unverified.
+- `### Impact Analysis – Proof That Existing Flows Are Not Affected` (en dash `–`): each existing flow touching the changed code and how it was verified (unit, integration, real-browser check, or unaffected by design with the reason); each acceptance criterion mapped to evidence; both verdicts quoted with the cycle count ("cycles: not recorded" if absent); the `latest-test-audit.md` result quoted when present (evidence, not a gate); the test commands and results (when this skill runs no test, quote the results from the verdict files and name the file); risk tier, remaining risk, rollback. State anything unverified as unverified.
 - `### Before and After Screenshots`: table `Scenario | Before | After`, one row per affected screen or state. No UI: "N/A – no UI changes", plus before/after logs, API responses or CLI output.
 
 ## 5. Language: ASD-STE100 Simplified Technical English
@@ -121,7 +136,8 @@ and order, and apply STE inside them.
 ## 6. Screenshots (strict)
 
 - Never commit them. Store them in `.claude/workflow/pr-assets/<slug>/{before,after}/`
-  (the slug and the exclude step are in section 1).
+  (the slug and the exclude step are in section 1). Create the folders only when
+  there are screenshots.
 - After: run the flow review's check script on the final state, or copy the flow
   review's screenshots of that state. Before: run it on the base in a temporary
   `git worktree add`, then remove the worktree. A screen that is new says so.
@@ -129,25 +145,47 @@ and order, and apply STE inside them.
   table. A cell without a screenshot says "unverified — no screenshot (<reason>)";
   Impact Analysis states it. A UI change with no check script: stop and ask.
 - Image check, before you finish: only images the change set adds, stages or
-  leaves untracked outside `.claude/` count (`git diff --diff-filter=AR --name-only <remote>/<base>...HEAD`,
-  `git diff --cached --diff-filter=AR --name-only`, `git ls-files --others --exclude-standard`;
-  extensions png, jpg, jpeg, gif, webp). Do not flag images already tracked in the
-  repo. If a match is staged, unstage it (`git restore --staged <path>`). If a match
-  is in a commit of the branch, or stays after unstaging, STOP: do not create or
-  edit the PR until the owner removes it from the commits.
+  leaves untracked count. Extensions: png, jpg, jpeg, gif, webp. Match the
+  extension with no regard to case (`.PNG` counts). Run these commands:
+  - `git diff --diff-filter=A --name-only <remote>/<base>...HEAD`
+  - `git log --diff-filter=A --name-only --format= <remote>/<base>..HEAD`
+  - `git diff --cached --diff-filter=A --name-only`
+  - `git diff --diff-filter=A --name-only <remote>/<base>` (working tree against
+    the base; it also lists a new file after `git add -N`)
+  - `git ls-files --others --exclude-standard`
+- "Already tracked" always means tracked in `<remote>/<base>`. Do not flag such an
+  image. A rename (`R`) of such an image is not a match. An image that a commit
+  of the branch added is not already tracked, even though it is tracked at `HEAD`.
+- The `git log` command finds an image that a commit added and a later commit
+  deleted. That image stays in the history, so it counts as committed.
+- The `.claude/` exclusion applies only to the untracked check. Ignore untracked
+  paths under `.claude/`.
+- A committed match: STOP. Do not create or edit the PR until the owner removes
+  the image from the commits.
+- A staged match: unstage it (`git restore --staged <path>`). Then ask the owner to
+  move the file or ignore it. The file is now untracked, so the untracked rule
+  applies and the check keeps blocking.
+- An untracked match outside `.claude/`: ask the owner to move the file or ignore it.
+  The check keeps blocking until the owner does so.
+- Exception: the owner may state in the session that an added image is a product
+  asset (an icon or a logo), not a screenshot. Quote those words in Impact
+  Analysis. That image is not a match and does not stop the PR.
 
 ## 7. Output
 
 1. Print the description in Markdown first. Do not create or update the PR yet.
-2. After the owner explicitly confirms, run both gates again (staleness included)
-   against the gate 1 record, and run the image check of section 6 again. A new
-   commit, an edited file, a RED or stale verdict, or an image match blocks: name
-   the gate that failed.
+2. After the owner explicitly confirms, run `git fetch <remote>`. Then run both
+   gates again (staleness included) against the gate 1 record, and run the image
+   check of section 6 again. If `gate.md` is missing, stop and run gate 1 again.
+   A new commit, an edited file, a RED or stale verdict, or an image match blocks:
+   name the gate that failed. For `gh pr edit`, read `headRefOid` again with
+   `gh pr view` at this step. It must equal local `HEAD`.
 3. Run `git fetch <remote>`. Local `HEAD` must equal `<remote>/<branch>`; otherwise
    stop and tell the owner to push or reconcile.
 4. Write the body to `.claude/workflow/pr-assets/<slug>/pr-body.md`, then run
    `gh pr create --body-file <that file>` or `gh pr edit --body-file <that file>`.
-   Add no attribution of your own; project and owner rules apply.
+   For `gh pr edit`, read `headRefOid` again right before the edit. It must equal
+   local `HEAD`. Add no attribution of your own; project and owner rules apply.
 
 Never invent a test result, flow, verdict, number or screenshot. Keep the five
 headings and their order, always.
