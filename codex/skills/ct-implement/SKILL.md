@@ -70,12 +70,16 @@ Run the test-audit skill as analysis only on the staged diff. Write the report t
 `.claude/workflow/reviews/latest-test-audit.md` with the first line `TEST-AUDIT: DONE`.
 The report must be newer than the git index: write it after the last `git add`, and
 write it again after any re-stage. Propose test removals to the owner; never delete
-a test silently. If the `npx skills add` command fails (offline, no `npx`), say so to
-the owner and do not write `TEST-AUDIT: DONE`; the commit waits.
+a test silently. If the `npx skills add` command cannot run (offline, no `npx`),
+tell the owner. Only if the owner explicitly waives the audit in the session, write
+the report with the first line `TEST-AUDIT: WAIVED` and the owner's words. Otherwise
+the commit waits. A local commit guard may still require `TEST-AUDIT: DONE`. If the
+guard blocks a WAIVED report, do not write `DONE`; tell the owner and wait.
 
 ## PR handoff
 
-Write the PR body with `$ct-pr-description`. Open a PR only on a GREEN review.
+Write the PR body with `$ct-pr-description`. A PR needs the GREEN code verdict, the
+GREEN flow verdict and the owner's confirmation. `$ct-pr-description` checks all three.
 
 ## Codex execution
 

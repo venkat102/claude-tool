@@ -92,12 +92,18 @@ When the review is the pipeline gate before a commit or PR, record it in
 or `VERDICT: RED`; the result is RED while any critical or important finding stands.
 Then list the scope (branch, base, `HEAD` and the diff hash), the cycle number, the
 reviewer (and whether it was a single-agent review) and the dimensions covered.
+Record one explicit line: "reviewer is the author of the change" or "reviewer is
+not the author of the change". If the owner accepts a disclosed single-agent
+review in the session, quote that acceptance in the file.
 Compute the diff hash with `git diff <remote>/<base>...HEAD | sha256sum` for a
-committed change set, or `git diff <remote>/<base> | sha256sum` for an uncommitted
-review (working tree including staged; list untracked files by name). A recorded
+committed change set. For an uncommitted review, first run
+`git add -N <untracked change-set files outside .claude/>`, then run
+`git diff <remote>/<base> | sha256sum` (working tree including staged). A recorded
 `HEAD` that is an ancestor of the current `HEAD` with an unchanged diff hash is not stale.
 Record the flow or browser result in `.claude/workflow/reviews/latest-flow.md` the
-same way. `VERDICT: GREEN — N/A: <reason>` is valid only for a documentation-only change.
+same way. A documentation-only change still needs this file, with the first line
+`VERDICT: GREEN — N/A: documentation only …`. The N/A form is valid only for a
+documentation-only change.
 
 ## Codex execution
 
